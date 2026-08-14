@@ -1,2 +1,2 @@
 # rust-projects
-My Rust Learning Lessions
+My Rust Mini Projects
