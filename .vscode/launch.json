@@ -1,0 +1,20 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug Rust (MinGW Dynamic)",
+            "preLaunchTask": "cargo build",
+            "program": "${cargo:program}",
+            "args": [],
+            "cwd": "${workspaceFolder}/debugging/",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--manifest-path=${workspaceFolder}/debugging/Cargo.toml"
+                ]
+            }
+        }
+    ]
+}
