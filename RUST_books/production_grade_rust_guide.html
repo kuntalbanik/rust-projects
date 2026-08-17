@@ -1,0 +1,1410 @@
+<!DOCTYPE html>
+<html lang="bn" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Production-Grade Rust — একটি বাংলা গাইড</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Hind+Siliguri:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --radius: 10px;
+    --sidebar-w: 320px;
+  }
+
+  html[data-theme="dark"] {
+    --bg: #12151b;
+    --bg-elevated: #1a1e27;
+    --bg-elevated-2: #20242f;
+    --text: #e7e4db;
+    --text-dim: #8c93a3;
+    --text-faint: #5b6172;
+    --accent: #e2622a;
+    --accent-soft: rgba(226, 98, 42, 0.14);
+    --accent-2: #5aacdc;
+    --accent-2-soft: rgba(90, 172, 220, 0.13);
+    --border: #2a2f3b;
+    --border-soft: #232833;
+    --good: #7ac787;
+    --warn: #e2b23a;
+    --shadow: 0 8px 30px rgba(0,0,0,0.35);
+    --code-bg: #0d0f14;
+    --scrollbar: #333947;
+  }
+
+  html[data-theme="light"] {
+    --bg: #e9e7e0;
+    --bg-elevated: #fbfaf7;
+    --bg-elevated-2: #f2f0ea;
+    --text: #1b1e24;
+    --text-dim: #565c68;
+    --text-faint: #8a8f99;
+    --accent: #c1501c;
+    --accent-soft: rgba(193, 80, 28, 0.10);
+    --accent-2: #1f6fa8;
+    --accent-2-soft: rgba(31, 111, 168, 0.09);
+    --border: #d9d5c9;
+    --border-soft: #e3dfd3;
+    --good: #2f8a45;
+    --warn: #a6740f;
+    --shadow: 0 8px 24px rgba(60,50,30,0.12);
+    --code-bg: #23262d;
+    --scrollbar: #cfc9b8;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Hind Siliguri', 'Space Grotesk', sans-serif;
+    font-size: 16px;
+    line-height: 1.65;
+    transition: background .25s ease, color .25s ease;
+  }
+
+  ::selection { background: var(--accent-soft); color: var(--accent); }
+
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 10px; }
+
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  .display { font-family: 'Space Grotesk', sans-serif; }
+
+  a { color: var(--accent-2); }
+
+  /* ---------- Theme toggle ---------- */
+  .theme-toggle {
+    position: fixed;
+    top: 18px;
+    right: 22px;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 4px;
+    box-shadow: var(--shadow);
+  }
+  .theme-toggle button {
+    border: none;
+    background: transparent;
+    color: var(--text-faint);
+    font-size: 16px;
+    width: 36px;
+    height: 32px;
+    border-radius: 999px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .2s ease;
+  }
+  .theme-toggle button.active {
+    background: var(--accent);
+    color: #fff;
+  }
+  html[data-theme="light"] .theme-toggle button.active { color: #fff; }
+
+  /* ---------- Layout ---------- */
+  .shell { display: flex; min-height: 100vh; }
+
+  .sidebar {
+    width: var(--sidebar-w);
+    flex-shrink: 0;
+    background: var(--bg-elevated);
+    border-right: 1px solid var(--border);
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    overflow-y: auto;
+    padding: 22px 16px 40px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 4px 6px 16px;
+    border-bottom: 1px solid var(--border-soft);
+    margin-bottom: 14px;
+  }
+  .brand .crab { font-size: 20px; }
+  .brand-text { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: .2px; }
+  .brand-text .dim { color: var(--text-faint); font-weight: 500; }
+
+  .search-box {
+    position: relative;
+    margin-bottom: 18px;
+  }
+  .search-box input {
+    width: 100%;
+    background: var(--bg-elevated-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 9px 12px 9px 30px;
+    font-family: 'Hind Siliguri', sans-serif;
+    font-size: 13.5px;
+    outline: none;
+  }
+  .search-box input:focus { border-color: var(--accent); }
+  .search-box::before {
+    content: "⌕";
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-faint);
+    font-size: 14px;
+  }
+
+  .nav-part {
+    margin-bottom: 4px;
+  }
+  .nav-part-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--accent-2);
+    padding: 10px 6px 4px;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .nav-part-title .num { color: var(--text-faint); }
+  .nav-item {
+    display: block;
+    padding: 6px 8px 6px 20px;
+    font-size: 13.5px;
+    color: var(--text-dim);
+    text-decoration: none;
+    border-radius: 6px;
+    border-left: 2px solid transparent;
+    line-height: 1.35;
+  }
+  .nav-item:hover { color: var(--text); background: var(--bg-elevated-2); }
+  .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: var(--accent-soft); }
+  .nav-item .en { display:block; font-family:'JetBrains Mono',monospace; font-size: 11px; color: var(--text-faint); }
+
+  .sidebar-footer {
+    margin-top: 20px;
+    padding: 12px 8px 4px;
+    border-top: 1px solid var(--border-soft);
+    font-size: 12px;
+    color: var(--text-faint);
+  }
+
+  .main {
+    flex: 1;
+    min-width: 0;
+    padding: 0 0 120px;
+  }
+
+  .content-wrap {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 56px 40px 0;
+  }
+
+  /* ---------- Hero ---------- */
+  .hero {
+    padding: 10px 0 46px;
+    border-bottom: 1px solid var(--border-soft);
+    margin-bottom: 44px;
+  }
+  .hero .kicker {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    color: var(--accent-2);
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .hero .kicker .dot { width:6px;height:6px;border-radius:50%;background:var(--good); box-shadow:0 0 8px var(--good); }
+  .hero pre.modblock {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14.5px;
+    line-height: 1.75;
+    background: var(--code-bg);
+    color: #d8dbe3;
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    overflow-x: auto;
+    margin: 0 0 26px;
+    border: 1px solid var(--border);
+  }
+  .hero pre.modblock .kw { color: #e2622a; }
+  .hero pre.modblock .ty { color: #5aacdc; }
+  .hero pre.modblock .cm { color: #6a7285; }
+  .hero pre.modblock .st { color: #9dd17a; }
+  .hero h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 33px;
+    line-height: 1.3;
+    margin: 0 0 14px;
+    font-weight: 700;
+  }
+  .hero h1 .accent { color: var(--accent); }
+  .hero p.lead {
+    color: var(--text-dim);
+    font-size: 16.5px;
+    max-width: 66ch;
+    margin: 0 0 20px;
+  }
+  .hero .meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 22px;
+  }
+  .badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    padding: 6px 11px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    background: var(--bg-elevated);
+  }
+  .badge.accent { border-color: var(--accent); color: var(--accent); }
+
+  /* ---------- Part section header ---------- */
+  .part-header {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin: 66px 0 22px;
+  }
+  .part-header:first-of-type { margin-top: 0; }
+  .part-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--bg);
+    background: var(--accent);
+    padding: 3px 9px;
+    border-radius: 6px;
+    font-weight: 600;
+  }
+  .part-header h2 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 22px;
+    margin: 0;
+    font-weight: 700;
+  }
+  .part-header .part-sub {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-faint);
+    font-size: 12.5px;
+  }
+  .part-intro {
+    color: var(--text-dim);
+    font-size: 14.5px;
+    margin: -10px 0 26px;
+    max-width: 68ch;
+  }
+
+  /* ---------- Card ---------- */
+  .card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 22px;
+    overflow: hidden;
+    scroll-margin-top: 24px;
+  }
+  .card-head {
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border-soft);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .card-head-left { display:flex; align-items:baseline; gap: 12px; flex-wrap: wrap; }
+  .card-id {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text-faint);
+  }
+  .card-title-en {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15.5px;
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .card-title-bn {
+    font-family: 'Space Grotesk','Hind Siliguri', sans-serif;
+    font-size: 15px;
+    color: var(--text-dim);
+    font-weight: 500;
+  }
+  .card-body { padding: 4px 24px 20px; }
+  .field { padding: 14px 0; border-top: 1px dashed var(--border-soft); }
+  .field:first-child { border-top: none; }
+  .field-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--accent-2);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .field-label .ic { font-size: 13px; }
+  .field-text { font-size: 14.5px; color: var(--text); }
+  .field-text b, .field-text strong { color: var(--text); font-weight: 600; }
+  .field-text code, .field-text .kbd {
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--accent-2-soft);
+    color: var(--accent-2);
+    padding: 1.5px 6px;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+  .field.why { background: var(--accent-soft); margin: 0 -24px; padding: 14px 24px; border-top: 1px solid var(--border-soft); border-bottom: 1px solid var(--border-soft); }
+  .field.why .field-label { color: var(--accent); }
+
+  .code-block {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.65;
+    background: var(--code-bg);
+    color: #d8dbe3;
+    border-radius: 8px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    margin-top: 8px;
+    border: 1px solid var(--border);
+    white-space: pre;
+  }
+  .code-block .kw { color: #e2622a; }
+  .code-block .ty { color: #5aacdc; }
+  .code-block .cm { color: #6a7285; font-style: italic; }
+  .code-block .st { color: #9dd17a; }
+  .code-block .fn { color: #d9c568; }
+  .code-block .mc { color: #c792ea; }
+
+  .tag-row { display:flex; gap:6px; flex-wrap:wrap; }
+  .tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: var(--bg-elevated-2);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+  }
+
+  /* Resources */
+  .res-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 720px) { .res-grid { grid-template-columns: 1fr; } }
+  .res-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .res-card a { font-family:'Space Grotesk',sans-serif; font-weight:600; font-size: 14.5px; text-decoration:none; }
+  .res-card a:hover { text-decoration: underline; }
+  .res-card p { margin: 6px 0 0; font-size: 13px; color: var(--text-dim); }
+
+  footer.page-footer {
+    max-width: 900px;
+    margin: 70px auto 0;
+    padding: 26px 40px 60px;
+    color: var(--text-faint);
+    font-size: 13px;
+    border-top: 1px solid var(--border-soft);
+  }
+
+  /* mobile */
+  .sidebar-toggle {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    z-index: 210;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    font-size: 20px;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+  }
+
+  @media (max-width: 880px) {
+    .content-wrap { padding: 90px 20px 0; }
+    .sidebar {
+      position: fixed;
+      left: 0; top: 0;
+      z-index: 205;
+      transform: translateX(-105%);
+      transition: transform .25s ease;
+      box-shadow: var(--shadow);
+    }
+    .sidebar.open { transform: translateX(0); }
+    .sidebar-toggle { display: flex; align-items: center; justify-content: center; }
+    .hero h1 { font-size: 26px; }
+    .res-grid { grid-template-columns: 1fr; }
+  }
+
+  .no-results { color: var(--text-faint); font-family:'JetBrains Mono',monospace; padding: 40px 0; font-size: 13.5px; }
+
+  kbd.key {
+    font-family:'JetBrains Mono',monospace;
+    background: var(--bg-elevated-2);
+    border: 1px solid var(--border);
+    border-bottom-width: 2px;
+    padding: 1px 6px;
+    border-radius: 5px;
+    font-size: 11.5px;
+    color: var(--text-dim);
+  }
+</style>
+</head>
+<body>
+
+<div class="theme-toggle" role="group" aria-label="থিম পরিবর্তন">
+  <button id="btn-dark" onclick="setTheme('dark')" title="Dark mode">☾</button>
+  <button id="btn-light" onclick="setTheme('light')" title="Light mode">☀</button>
+</div>
+
+<button class="sidebar-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="crab">🦀</span>
+      <span class="brand-text">production_grade_rust<span class="dim">.bn</span></span>
+    </div>
+    <div class="search-box">
+      <input id="searchInput" type="text" placeholder="টপিক খুঁজুন... (যেমনঃ tokio, error)" oninput="filterCards()">
+    </div>
+    <nav id="navList"></nav>
+    <div class="sidebar-footer mono">
+      <div id="cardCount"></div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="content-wrap">
+
+      <section class="hero">
+        <div class="kicker"><span class="dot"></span> STATUS: compiling_knowledge — 0 warnings</div>
+        <pre class="modblock"><span class="kw">mod</span> <span class="ty">production_grade_rust</span> {
+    <span class="cm">// ওনারশিপ শিখেছো, এখন প্রোডাকশনে টিকে থাকার পালা</span>
+    <span class="kw">use</span> engineering::{reliability, performance, maintainability};
+}</pre>
+        <h1>Production-Grade <span class="accent">Rust</span> — শেখার সম্পূর্ণ বাংলা রোডম্যাপ</h1>
+        <p class="lead">Rust বইয়ের (The Book) কনসেপ্টগুলো "কীভাবে কম্পাইল হয়" তা শেখায়। এই গাইডটা শেখাবে সেগুলো "কীভাবে প্রোডাকশনে টেকে" — কোন ক্রেট কেন বাছবে, কোনটা এড়াবে, আর সিনিয়র ডেভেলপাররা যেগুলো নিয়ে বার বার মাথা ঘামায়।</p>
+        <div class="meta-row">
+          <span class="badge accent">44 টপিক</span>
+          <span class="badge">10 পার্ট</span>
+          <span class="badge">Bengali + English terms</span>
+          <span class="badge">Rust 2024 edition অনুযায়ী</span>
+        </div>
+      </section>
+
+      <div id="topicsRoot"></div>
+
+      <section id="resources-section"></section>
+
+    </div>
+
+    <footer class="page-footer mono">
+      বানানো হয়েছে ২০২৬ সালের Rust ইকোসিস্টেম অনুযায়ী — ক্রেটের ভার্সন আর "কমিউনিটি কনসেনসাস" সময়ের সাথে বদলাতে পারে, তাই crates.io আর This Week in Rust চোখে চোখে রাখা ভালো অভ্যাস।
+    </footer>
+  </main>
+</div>
+
+<script>
+const PARTS = [
+  {id:"p1", num:"01", title:"কোর ল্যাংগুয়েজ কনসেপ্ট — প্রোডাকশন লেন্সে", sub:"mod core_concepts", intro:"Rust বইয়ের বেসিক জিনিসগুলোই প্রোডাকশনে সবচেয়ে বেশি সিদ্ধান্ত নিতে হয় এমন জায়গা। এখানে 'কীভাবে কাজ করে' না, 'কখন কোনটা বাছবে' সেটাই মূল ফোকাস।"},
+  {id:"p2", num:"02", title:"এরর হ্যান্ডলিং ও রিলায়াবিলিটি", sub:"mod error_handling", intro:"প্রোডাকশন কোড আর টিউটোরিয়াল কোডের সবচেয়ে বড় পার্থক্য বোঝা যায় এরর হ্যান্ডলিং দেখে।"},
+  {id:"p3", num:"03", title:"কনকারেন্সি ও অ্যাসিঙ্ক প্রোগ্রামিং", sub:"mod concurrency", intro:"Rust এর 'fearless concurrency' প্রোডাকশনে আসল সুবিধা দেয় — কিন্তু async ইকোসিস্টেম নিজেই একটা আলাদা জগৎ, এখানে ঠিক জায়গায় ঠিক টুল বাছাই জরুরি।"},
+  {id:"p4", num:"04", title:"ওয়েব, নেটওয়ার্কিং ও ডেটাবেজ", sub:"mod web_and_data", intro:"বেশিরভাগ প্রোডাকশন Rust ব্যাকএন্ড সার্ভিসেই এই ক্রেটগুলো ঘুরেফিরে আসবে।"},
+  {id:"p5", num:"05", title:"টেস্টিং ও কোয়ালিটি অ্যাসিউরেন্স", sub:"mod testing", intro:"cargo test শুধু শুরু — প্রোডাকশন-গ্রেড টেস্টিং এর চেয়ে অনেক গভীরে যায়।"},
+  {id:"p6", num:"06", title:"টুলিং, লিন্টিং ও বিল্ড স্পিড", sub:"mod tooling", intro:"এই টুলগুলো ছাড়া কোনো Rust টিম প্রোডাকশনে সিরিয়াসভাবে কাজ করে না।"},
+  {id:"p7", num:"07", title:"পারফরম্যান্স অপ্টিমাইজেশন", sub:"mod performance", intro:"Rust ডিফল্টভাবেই ফাস্ট, কিন্তু প্রোডাকশনে 'ফাস্ট এনাফ' বানানোর জন্য কিছু ডায়াল ঘোরাতে জানতে হয়।"},
+  {id:"p8", num:"08", title:"লগিং, মনিটরিং ও কনফিগারেশন", sub:"mod observability", intro:"প্রোডাকশনে কোড চলার পর আসল চ্যালেঞ্জ শুরু হয় — 'ভেতরে কী হচ্ছে' সেটা জানা।"},
+  {id:"p9", num:"09", title:"ডিপ্লয়মেন্ট ও আর্কিটেকচার প্যাটার্ন", sub:"mod deploy_and_arch", intro:"কোড কম্পাইল হওয়া থেকে প্রোডাকশনে স্থিতিশীলভাবে চলা — এই দূরত্বটা কভার করার টপিকগুলো।"},
+  {id:"p10", num:"10", title:"শেখার পরবর্তী ধাপ ও রিসোর্স", sub:"mod resources", intro:"বই শেষ করার পর ঠিক কোন রাস্তায় হাঁটবে তার একটা ম্যাপ।"},
+];
+
+const TOPICS = [
+/* ================= PART 1 — CORE CONCEPTS ================= */
+{
+  id:"1.1", part:"p1",
+  en:"Ownership & Borrowing", bn:"ওনারশিপ ও বরোয়িং — প্রোডাকশন অভ্যাস",
+  what:`মুখস্থ থিওরি না, প্রোডাকশনে আসল কথা হলো — <code>.clone()</code> কখন justified আর কখন সেটা "আমি borrow checker বুঝিনি তাই clone মেরে দিলাম" এর লুকানো স্বীকারোক্তি। ওনারশিপ আসলে একটা ডেটা-ফ্লো ডিজাইন টুল, শুধু মেমরি সেফটির নিয়ম না।`,
+  where:`প্রতিটা ফাংশন সিগনেচার লেখার সময় — parameter নেবে <code>T</code>, <code>&T</code>, নাকি <code>&mut T</code>? লাইব্রেরি API ডিজাইনের সবচেয়ে গুরুত্বপূর্ণ সিদ্ধান্ত এখানেই।`,
+  why:`জুনিয়র ডেভরা compiler কে খুশি করতে সবজায়গায় <code>.clone()</code> ছড়িয়ে দেয় — এটা কম্পাইল হয়, কিন্তু হট পাথে বড় struct বা <code>String</code> clone করলে পারফরম্যান্স চুপচাপ নষ্ট হয়। সিনিয়র রাস্ত ডেভরা প্রথমে বরো করার চেষ্টা করে, না পারলে বোঝে কেন না পারা যাচ্ছে (সেটাই আসল লার্নিং), তারপর দরকার হলে clone করে — with a comment explaining why।`,
+  alt:`<code>Rc&lt;T&gt;</code> / <code>Arc&lt;T&gt;</code> দিয়ে "শেয়ার্ড ওনারশিপ" করা যায় যেখানে clone সস্তা (শুধু রেফারেন্স কাউন্ট বাড়ে) — ডেটা কপি হয় না। কিন্তু এটাও ভুল জায়গায় ব্যবহার হলে রানটাইমে রেফারেন্স-কাউন্টিং ওভারহেড আর সম্ভাব্য মেমরি লিক (reference cycle) তৈরি করে।`,
+  note:`প্রথম ৬ মাস "fight the borrow checker" মনে হবে। কিন্তু ৬ মাস পর বুঝবে borrow checker আসলে তোমার architecture এর bug গুলো compile-time এ ধরে দিচ্ছিলো যেগুলো অন্য ভাষায় প্রোডাকশনে গিয়ে race condition হিসেবে ধরা পড়তো।`,
+  code:`fn process(data: &str) -> usize {      // borrow — cheap
+    data.len()
+}
+fn take_ownership(data: String) {        // owns — caller loses access
+    println!("{data}");
+}
+// production rule of thumb: borrow by default,
+// take ownership only when you truly need to consume/store it`,
+  tags:["ownership","borrowing","clone","Rc","Arc"]
+},
+{
+  id:"1.2", part:"p1",
+  en:"Structs, Enums & Pattern Matching", bn:"টাইপ ডিজাইন — এরর-প্রুফ API",
+  what:`Rust এ enum দিয়ে "impossible state" গুলোকে টাইপ সিস্টেমেই অসম্ভব করে দেওয়া যায় (এটাকে বলে "make illegal states unrepresentable")। যেমন একটা <code>Order</code> স্টেট মেশিন যেখানে "shipped কিন্তু paid না" — এই কম্বিনেশন কম্পাইল-টাইমেই আটকানো যায়।`,
+  where:`ডোমেইন মডেলিং, স্টেট মেশিন (order status, connection state), API রেসপন্স টাইপ, কনফিগারেশন পার্সিং।`,
+  why:`নতুনরা প্রায়ই একগাদা <code>bool</code> ফিল্ড দিয়ে struct বানায় (<code>is_paid</code>, <code>is_shipped</code>, <code>is_cancelled</code>) — এতে অসম্ভব কম্বিনেশন (paid=false, shipped=true) রানটাইমে ঢুকে পড়ে। একটা <code>enum OrderState { Pending, Paid{at: DateTime}, Shipped{tracking: String}, Cancelled{reason: String} }</code> দিয়ে সেই bug ক্লাসটাই বাদ দেওয়া যায় — <code>match</code> non-exhaustive হলে compiler নিজেই আটকাবে।`,
+  alt:`কিছু ডেভেলপার struct + bool flags ব্যবহার করে "সহজ" মনে করে — শুরুতে দ্রুত মনে হলেও প্রোডাকশনে এটাই সবচেয়ে বেশি bug রিপোর্ট তৈরি করে। ছোট, স্বল্পমেয়াদী স্ক্রিপ্টে bool flags ঠিক আছে, কিন্তু কোনো ডোমেইন লজিকে না।`,
+  note:`নিয়ম: যদি দুইটা ফিল্ড একসাথে "মিনিংফুল" কম্বিনেশন তৈরি করে (একটা আরেকটার উপর নির্ভরশীল), সেটা আলাদা bool না রেখে একটা enum variant বানাও।`,
+  code:`enum OrderState {
+    Pending,
+    Paid { at: String },
+    Shipped { tracking: String },
+    Cancelled { reason: String },
+}
+// match অবশ্যই exhaustive — নতুন variant যোগ করলে
+// compiler প্রতিটা match সাইট দেখিয়ে দেবে যেখানে হ্যান্ডল করা হয়নি`,
+  tags:["enum","struct","pattern matching","domain modeling"]
+},
+{
+  id:"1.3", part:"p1",
+  en:"Static vs Dynamic Dispatch", bn:"Trait: Generics নাকি dyn Trait?",
+  what:`Trait ব্যবহারের দুইটা পথ — <code>fn foo&lt;T: Trait&gt;(x: T)</code> (generics, static dispatch, compile-time এ monomorphize হয়) বনাম <code>fn foo(x: &dyn Trait)</code> (trait object, dynamic dispatch, vtable দিয়ে রানটাইমে রেজলভ হয়)।`,
+  where:`লাইব্রেরি API ডিজাইন, প্লাগইন সিস্টেম, heterogeneous collection (যেমন <code>Vec&lt;Box&lt;dyn Handler&gt;&gt;</code> — বিভিন্ন টাইপের হ্যান্ডলার এক Vec এ রাখা)।`,
+  why:`Generics (static dispatch) সবচেয়ে ফাস্ট — compiler প্রতিটা টাইপের জন্য আলাদা কোড জেনারেট করে (monomorphization), inline করতে পারে, কোনো রানটাইম ওভারহেড নেই। কিন্তু এতে বাইনারি সাইজ বাড়ে ("code bloat") আর কম্পাইল টাইমও বাড়ে। <code>dyn Trait</code> একটাই কপি কোড রাখে, বাইনারি ছোট, কম্পাইল ফাস্ট — কিন্তু প্রতি কলে vtable lookup এর ছোট রানটাইম কস্ট আছে, আর trait object এর সাইজ কম্পাইল-টাইমে অজানা তাই সবসময় <code>&dyn</code> বা <code>Box&lt;dyn&gt;</code> এর পিছনে রাখতে হয়।`,
+  alt:`এনাম-ভিত্তিক dispatch (<code>enum Shape { Circle(f64), Square(f64) }</code> + match) — যদি টাইপের সেট ফিক্সড এবং জানা থাকে, এটা dyn Trait এর চেয়ে ফাস্ট এবং বেশি explicit, কিন্তু ওপেন-এন্ডেড এক্সটেনসিবিলিটি (বাইরের ক্রেট নতুন টাইপ যোগ করতে পারবে) দরকার হলে trait/dyn ছাড়া উপায় নেই।`,
+  note:`ডিফল্ট রুল: লাইব্রেরির পাবলিক API তে generics দিয়ে শুরু করো (max flexibility, max perf)। যখন সত্যিই "runtime এ ভিন্ন ভিন্ন টাইপ এক collection এ" দরকার হবে, তখনই <code>dyn Trait</code> এ যাও — আগেভাগে dyn ব্যবহার করা প্রি-ম্যাচিউর এবং অপ্রয়োজনীয় ইনডাইরেকশন।`,
+  code:`// static dispatch — compiler প্রতি T এর জন্য আলাদা কোড বানায়
+fn render_static<T: Draw>(item: &T) { item.draw(); }
+
+// dynamic dispatch — এক কপি কোড, vtable দিয়ে কল
+fn render_dyn(item: &dyn Draw) { item.draw(); }
+
+// heterogeneous collection dyn ছাড়া সম্ভব না:
+let shapes: Vec<Box<dyn Draw>> = vec![Box::new(Circle), Box::new(Square)];`,
+  tags:["traits","generics","dyn","monomorphization","vtable"]
+},
+{
+  id:"1.4", part:"p1",
+  en:"Lifetimes in Real APIs", bn:"লাইফটাইম — থিওরি থেকে বাস্তব API তে",
+  what:`লাইফটাইম annotation কম্পাইলারকে নতুন কিছু "করায়" না — শুধু বলে দেয় কতগুলো রেফারেন্স একসাথে কতক্ষণ বাঁচবে, যাতে compiler dangling reference আটকাতে পারে।`,
+  where:`যেকোনো struct যেটা রেফারেন্স ধরে রাখে (<code>struct Parser<'a> { input: &'a str }</code>), বা ফাংশন যেখানে আউটপুট রেফারেন্স ইনপুটের কোনো একটার সাথে যুক্ত।`,
+  why:`বেশিরভাগ সময় (৯০%+) compiler নিজেই lifetime elision rules দিয়ে বুঝে যায়, explicit annotation লাগেই না। যখন struct এ রেফারেন্স রাখতে হয়, তখনই <code>'a</code> লিখতে হয় — এবং এটা প্রায়ই একটা সংকেত যে "এই struct টা owned data (যেমন <code>String</code>, <code>Vec&lt;T&gt;</code>) রাখলে ডিজাইন সহজ হতো কিনা" ভাবা উচিত।`,
+  alt:`প্রোডাকশনে অনেক সময় ইচ্ছাকৃতভাবে owned টাইপ (<code>String</code> বদলে <code>&str</code>) বাছা হয় যাতে lifetime এর জটিলতা এড়ানো যায় — বিশেষ করে API এর পাবলিক বাউন্ডারিতে, যেখানে caller কে lifetime বোঝানো একটা ergonomic কস্ট। পারফরম্যান্স-ক্রিটিক্যাল parsing কোডে (যেমন serde দিয়ে zero-copy deserialize) lifetime রাখা সার্থক।`,
+  note:`"লাইফটাইম fight" এর বেশিরভাগ কেসে আসল সমাধান হলো struct এর ডিজাইন পাল্টানো (owned data রাখা), lifetime annotation দিয়ে জোর করে ম্যানেজ করা না। এটা একটা design smell হিসেবে ট্রিট করো।`,
+  code:`// এই struct 'a লাইফটাইমের জন্য bound —
+// input স্ট্রিং যতক্ষণ বাঁচবে, parser ততক্ষণই ভ্যালিড
+struct Parser<'a> {
+    input: &'a str,
+    pos: usize,
+}
+// zero-copy: input কপি না করেই স্লাইস রেফারেন্স রেখে দেয়া`,
+  tags:["lifetimes","borrow checker","zero-copy","API design"]
+},
+{
+  id:"1.5", part:"p1",
+  en:"Smart Pointers", bn:"Box, Rc, Arc, RefCell, Mutex — কোনটা কখন",
+  what:`পাঁচটা টুল, পাঁচটা আলাদা সমস্যার সমাধান — এদের গুলিয়ে ফেলাই সবচেয়ে কমন প্রোডাকশন ভুল। <code>Box&lt;T&gt;</code> heap allocation, <code>Rc&lt;T&gt;</code> single-threaded শেয়ার্ড ওনারশিপ, <code>Arc&lt;T&gt;</code> multi-threaded শেয়ার্ড ওনারশিপ, <code>RefCell&lt;T&gt;</code> single-threaded interior mutability, <code>Mutex&lt;T&gt;</code>/<code>RwLock&lt;T&gt;</code> multi-threaded interior mutability।`,
+  where:`রিকার্সিভ ডেটা স্ট্রাকচার (Box), গ্রাফ/ট্রি যেখানে একাধিক owner লাগে (Rc/Arc), শেয়ার্ড mutable স্টেট (RefCell single-thread, Mutex/RwLock multi-thread — যেমন async হ্যান্ডলারগুলোর মধ্যে শেয়ার্ড কানেকশন পুল)।`,
+  why:`প্রোডাকশনে সবচেয়ে কমন প্যাটার্ন <code>Arc&lt;Mutex&lt;T&gt;&gt;</code> — কিন্তু এটা "সব সমস্যার সমাধান" ভাবাটা ভুল। প্রতিটা <code>.lock()</code> কল একটা potential contention পয়েন্ট। অনেক কেসে message passing (channel) দিয়ে shared mutable state এড়ানোই ভালো ডিজাইন — "shared state এর বদলে shared nothing, message পাঠাও" এটাই Rust এর দর্শন (Go এর মতোই: "don't communicate by sharing memory; share memory by communicating")।`,
+  alt:`Read-heavy workload এ <code>Mutex</code> এর বদলে <code>RwLock</code> ভালো (একসাথে অনেক reader চলতে পারে)। lock-free স্ট্রাকচার দরকার হলে <code>arc-swap</code> বা <code>crossbeam</code> এর atomic টাইপ, তবে এগুলো advanced এবং সহজেই ভুল করার জায়গা — প্রথমে সিম্পল Mutex দিয়ে শুরু করে, প্রোফাইল করে দেখে তারপর অপ্টিমাইজ করা উচিত।`,
+  note:`<code>Rc&lt;RefCell&lt;T&gt;&gt;</code> দেখলেই সতর্ক হও — parent-child সম্পর্কে reference cycle তৈরি হলে মেমরি কখনো free হবে না (Drop কল হবে না)। সেই কেসে <code>Weak&lt;T&gt;</code> দিয়ে "back reference" রাখো (parent → child strong, child → parent weak)।`,
+  code:`use std::sync::{Arc, Mutex};
+
+// multi-threaded shared mutable state
+let counter = Arc::new(Mutex::new(0));
+let c = Arc::clone(&counter);
+std::thread::spawn(move || {
+    let mut guard = c.lock().unwrap();
+    *guard += 1;
+}); // lock স্কোপ শেষে auto-release হয়`,
+  tags:["Box","Rc","Arc","RefCell","Mutex","RwLock"]
+},
+{
+  id:"1.6", part:"p1",
+  en:"Collections & String vs &str vs Cow", bn:"Vec, HashMap, String — সঠিক টাইপ বাছা",
+  what:`<code>Vec&lt;T&gt;</code>/<code>HashMap&lt;K,V&gt;</code> বেশিরভাগ কাজে ঠিক আছে, কিন্তু প্রোডাকশনে <code>BTreeMap</code> (sorted iteration লাগলে), <code>String</code> বনাম <code>&str</code> বনাম <code>Cow&lt;str&gt;</code> (owned vs borrowed vs "যেটা লাগে সেটা") বোঝা জরুরি।`,
+  where:`ফাংশন প্যারামিটারে string নেওয়ার সময় (<code>&str</code> নাকি <code>String</code>?), কনফিগ/অর্ডারড ডেটার জন্য map বাছার সময়, এমন কোডে যেখানে ডেটা কখনো কখনো মডিফাই করতে হয় কখনো না (Cow)।`,
+  why:`ফাংশন প্যারামিটারে <code>&str</code> নেওয়া প্রায় সবসময় <code>&String</code> বা <code>String</code> নেওয়ার চেয়ে ভালো — কারণ <code>&str</code> স্ট্রিং লিটারেল, <code>String</code>, এমনকি স্লাইস — সবকিছু নিতে পারে (deref coercion)। ফলে ক্যালার-সাইডে বেশি নমনীয়তা থাকে। <code>HashMap</code> এর iteration order আনডিফাইনড এবং প্রতি রানে পাল্টাতে পারে (security-এর জন্য ইচ্ছাকৃতভাবে randomized) — sorted বা predictable order লাগলে <code>BTreeMap</code> নিতে হবে, <code>HashMap</code> sort করে "ঠিক করার" চেষ্টা না করে।`,
+  alt:`<code>Cow&lt;'a, str&gt;</code> ("clone on write") এমন ফাংশনে কাজে লাগে যেখানে বেশিরভাগ সময় ডেটা মডিফাই করার দরকার হয় না (borrow করলেই চলে) কিন্তু মাঝেমধ্যে করতে হয় — তখনই clone হয়, বাকি সময় zero-cost। বেশিরভাগ প্রোজেক্টে এটা "nice to know" পর্যায়ের অপ্টিমাইজেশন, প্রথমে দরকার নেই।`,
+  note:`পারফরম্যান্স-সেন্সিটিভ কোডে <code>HashMap</code> এর ডিফল্ট হ্যাশার (SipHash) নিরাপদ কিন্তু ধীর — DoS-সেফটি লাগবে না এমন ইন্টারনাল hot path এ <code>rustc-hash</code> বা <code>ahash</code> এর মতো ফাস্টার হ্যাশার সুইচ করা কমন প্র্যাকটিস।`,
+  code:`fn greet(name: &str) -> String {   // &str param, String return
+    format!("হ্যালো, {name}!")
+}
+greet("রাহুল");                       // &str literal — ok
+greet(&String::from("করিম"));         // &String — auto-derefs — ok`,
+  tags:["Vec","HashMap","BTreeMap","String","&str","Cow"]
+},
+{
+  id:"1.7", part:"p1",
+  en:"Closures & Iterators", bn:"Iterator vs Loop — Zero-Cost Abstraction",
+  what:`Rust এর iterator chain (<code>.map().filter().collect()</code>) কম্পাইল হয়ে প্রায় হাতে-লেখা <code>for</code> লুপের সমান বা কখনো দ্রুততর কোডে পরিণত হয় — কারণ compiler bounds-check বাদ দিতে পারে এবং পুরো chain টা inline+vectorize করতে পারে। একেই বলে "zero-cost abstraction"।`,
+  where:`ডেটা ট্রান্সফরমেশন পাইপলাইন, ফিল্টারিং/ম্যাপিং কালেকশন, lazy evaluation (iterator নিজে থেকে কিছু করে না যতক্ষণ না <code>.collect()</code>/<code>.for_each()</code>/<code>.sum()</code> এর মতো কনজিউমার কল হয়)।`,
+  why:`নতুনরা প্রায়ই C-স্টাইল ইনডেক্স-বেসড লুপ লেখে (<code>for i in 0..v.len() { v[i] ... }</code>) — এটা runtime bounds-checking করে প্রতি অ্যাক্সেসে এবং readability কম। Iterator-স্টাইল (<code>for x in &v</code> বা <code>v.iter().map(...)</code>) compiler কে বেশি তথ্য দেয় optimize করার জন্য, এবং সাধারণত বেশি expressive। বেঞ্চমার্কে প্রায় সবসময় iterator ভার্সন সমান বা দ্রুততর হয়।`,
+  alt:`খুব জটিল, multi-condition লজিকে মাঝে মাঝে explicit <code>for</code> লুপ বেশি readable হয় — "iterator chain এর জন্য iterator chain" করার দরকার নেই, readability-ই আসল লক্ষ্য, শুধু raw perf না।`,
+  note:`<code>.clone()</code> এর মতোই, iterator chain এ <code>.collect::&lt;Vec&lt;_&gt;&gt;()</code> মাঝপথে করে আবার iterate করাটা একটা কমন অ্যান্টি-প্যাটার্ন — chain টাকে lazy রেখে শেষেই একবার collect করাই ভালো, মাঝে মাঝে অপ্রয়োজনীয় allocation এড়ানো যায়।`,
+  code:`let total: i32 = numbers.iter()
+    .filter(|&&n| n % 2 == 0)
+    .map(|&n| n * n)
+    .sum();                 // lazy chain, একবারে evaluate হয়
+// vs manual loop — একই পারফরম্যান্স, কম expressive:
+// let mut total = 0;
+// for n in &numbers { if n % 2 == 0 { total += n * n; } }`,
+  tags:["iterators","closures","performance","zero-cost"]
+},
+{
+  id:"1.8", part:"p1",
+  en:"Unsafe Rust", bn:"unsafe — কখন, কীভাবে, আর কতটা সাবধানে",
+  what:`<code>unsafe</code> ব্লক পাঁচটা নির্দিষ্ট সুপারপাওয়ার আনলক করে (raw pointer dereference, unsafe fn কল, mutable static অ্যাক্সেস, unsafe trait implement, union field অ্যাক্সেস) — কিন্তু বাকি বরো-চেকিং বন্ধ করে দেয় না, শুধু কম্পাইলার-চেক করা যায় না এমন কয়েকটা নির্দিষ্ট অপারেশন অনুমতি দেয়।`,
+  where:`FFI (C লাইব্রেরির সাথে ইন্টারফেস), কাস্টম ডেটা স্ট্রাকচার লেখা (লিংকড লিস্ট, লক-ফ্রি স্ট্রাকচার) যেখানে বরো চেকার প্রমাণ করতে পারে না কিন্তু প্রোগ্রামার জানে সেফ, পারফরম্যান্স-ক্রিটিক্যাল কোড যেখানে bounds-check এড়াতে হয় (প্রমাণিতভাবে সেফ হলেই)।`,
+  why:`একটা সাধারণ ভুল ধারণা: "unsafe মানে C এর মতো ঝুঁকিপূর্ণ কোড লেখা"। বাস্তবে, unsafe ব্লক লেখার দায়িত্ব হলো একটা "সেফটি ইনভেরিয়েন্ট" মেইনটেইন করা যা compiler নিজে verify করতে পারে না, কিন্তু প্রোগ্রামার প্রমাণ করে দেখায় (সাধারণত কমেন্টে)। প্রোডাকশন-গ্রেড টিমে প্রতিটা <code>unsafe</code> ব্লকের উপরে <code># SAFETY:</code> কমেন্ট লিখে ঠিক কেন এটা সেফ তা ব্যাখ্যা করা বাধ্যতামূলক প্র্যাকটিস — এটা code review এর সবচেয়ে কড়া অংশ।`,
+  alt:`৯৯% প্রোডাকশন Rust কোডে <code>unsafe</code> এর দরকারই হয় না — std লাইব্রেরি আর ভালো ক্রেটগুলো (যেমন <code>bytes</code>, <code>smallvec</code>) ইতিমধ্যে দরকারি unsafe কোড অডিট করে সেফ API এর পেছনে লুকিয়ে দিয়েছে। নিজে unsafe লেখার আগে সবসময় প্রশ্ন করা উচিত — "এই কাজটা কি কোনো ভালো ক্রেট already করে দিয়েছে?"`,
+  note:`<code>cargo geiger</code> দিয়ে একটা প্রোজেক্টের ডিপেন্ডেন্সি ট্রিতে কতটা unsafe কোড আছে দেখা যায় — সিকিউরিটি-সেন্সিটিভ প্রোজেক্টে dependency বাছার সময় এটা একটা রিয়েল সিগন্যাল।`,
+  code:`// # SAFETY: idx < arr.len() টা আগেই assert করা হয়েছে,
+// তাই এই get_unchecked() out-of-bounds হবে না
+unsafe {
+    let val = arr.get_unchecked(idx);
+}`,
+  tags:["unsafe","FFI","safety invariant","cargo geiger"]
+},
+/* ================= PART 2 — ERROR HANDLING ================= */
+{
+  id:"2.1", part:"p2",
+  en:"panic! vs Result — Philosophy", bn:"কখন panic!, কখন Result",
+  what:`Rust এর এরর হ্যান্ডলিং দুই স্তরে ভাগ করা — <code>panic!</code> আনরিকভারেবল বাগের জন্য (প্রোগ্রাম বন্ধ করে দেয়া উচিত এমন অবস্থা), <code>Result&lt;T, E&gt;</code> এক্সপেক্টেড, রিকভারেবল ফেইলিওরের জন্য (নেটওয়ার্ক টাইমআউট, ফাইল না পাওয়া, ভ্যালিডেশন এরর)।`,
+  where:`লাইব্রেরি কোডে প্রতিটা ফাংশন যা fail করতে পারে — তার সিগনেচারেই <code>Result</code> থাকা উচিত। <code>panic!</code> মূলত internal invariant ভাঙলে (যেমন "এই index অবশ্যই ভ্যালিড, না হলে আমাদের লজিকেই বাগ আছে")।`,
+  why:`নতুনরা প্রায়ই দ্রুত এগোনোর জন্য সব জায়গায় <code>.unwrap()</code> বা <code>.expect()</code> ব্যবহার করে — লোকাল স্ক্রিপ্টে ঠিক আছে, কিন্তু প্রোডাকশন সার্ভারে একটা <code>.unwrap()</code> মানে একটা bad request পুরো প্রসেস ক্র্যাশ করাতে পারে (যদি সেই থ্রেড/টাস্কে recover করার ব্যবস্থা না থাকে)। নিয়ম: লাইব্রেরি এবং যেকোনো কোড যা ইউজার ইনপুট/এক্সটার্নাল সিস্টেম টাচ করে সেখানে <code>Result</code> প্রোপাগেট করো (<code>?</code> দিয়ে), <code>unwrap</code> শুধু সেই জায়গায় যেখানে fail হওয়া মানে সত্যিই কোনো bug (এবং সেটাই যেন হয় crash করার সঠিক সিদ্ধান্ত)।`,
+  alt:`<code>.expect("কেন এটা কখনো fail করবে না তার ব্যাখ্যা")</code> সবসময় খালি <code>.unwrap()</code> এর চেয়ে ভালো — crash হলেও লগে একটা মিনিংফুল মেসেজ থাকে যা debugging এ সাহায্য করে।`,
+  note:`প্রোডাকশন ওয়েব সার্ভিসে সাধারণত <code>#![deny(clippy::unwrap_used)]</code> এর মতো একটা lint CI তে অন রাখা হয় (main.rs বা টেস্ট কোড ছাড়া), যাতে কেউ ভুলে <code>.unwrap()</code> মার্জ করতে না পারে।`,
+  code:`// লাইব্রেরি ফাংশন — Result প্রোপাগেট করো
+fn parse_port(s: &str) -> Result<u16, std::num::ParseIntError> {
+    s.parse::<u16>()
+}
+// internal invariant ভাঙলে panic ঠিক আছে —
+// এটা "কখনো ঘটার কথা না" এমন কেস
+assert!(config.workers > 0, "worker count শূন্য হতে পারে না — কনফিগ বাগ");`,
+  tags:["panic","Result","unwrap","expect","clippy"]
+},
+{
+  id:"2.2", part:"p2",
+  en:"thiserror vs anyhow vs eyre", bn:"এরর ক্রেট বাছাই — লাইব্রেরি vs অ্যাপ্লিকেশন",
+  what:`দুইটা ভিন্ন কনটেক্সটের জন্য দুইটা ভিন্ন টুল। <code>thiserror</code> — কাস্টম, structured error enum বানানোর জন্য (derive ম্যাক্রো দিয়ে <code>std::error::Error</code> implement করে দেয়)। <code>anyhow</code>/<code>eyre</code> — যেকোনো এরর "একসাথে" হ্যান্ডল করার জন্য, dynamic <code>Box&lt;dyn Error&gt;</code> এর সুবিধাজনক wrapper, সাথে ভালো context/backtrace।`,
+  where:`লাইব্রেরি/ক্রেট লিখলে (যেটা অন্যরা ব্যবহার করবে) — <code>thiserror</code>। অ্যাপ্লিকেশন/বাইনারি/সার্ভিস লিখলে (যেখানে caller নেই, শুধু লগ করে বা ইউজারকে দেখাতে হবে) — <code>anyhow</code>।`,
+  why:`লাইব্রেরির ইউজার তার caller-code এ নির্দিষ্ট এরর ভ্যারিয়েন্ট ম্যাচ করতে চাইবে (<code>match err { MyError::NotFound => ..., MyError::Timeout => ... }</code>) — এটার জন্য structured enum দরকার, <code>thiserror</code> ঠিক এটাই সহজ করে দেয় boilerplate ছাড়া। কিন্তু অ্যাপ্লিকেশন লেভেলে (যেমন একটা CLI টুল বা ওয়েব হ্যান্ডলারের ভেতরে) প্রতিটা possible এরর টাইপের জন্য আলাদা enum variant বানানো অপ্রয়োজনীয় বয়লারপ্লেট — সেখানে <code>anyhow::Error</code> + <code>.context("কী করার সময় fail হলো")</code> দিয়ে দ্রুত, readable এরর চেইন বানানো যায়।`,
+  alt:`<code>eyre</code> মূলত <code>anyhow</code> এরই একটা fork, কাস্টমাইজেবল এরর রিপোর্ট ফরম্যাটিং নিয়ে (রঙিন, সুন্দর backtrace) — বড় টিমে "human-friendly CLI এরর" দরকার হলে ভালো অপশন, নাহলে <code>anyhow</code>ই যথেষ্ট এবং বেশি প্রচলিত। <code>snafu</code> আরেকটা অপশন যেটা thiserror-এর মতোই কিন্তু context-এর উপর বেশি ফোকাসড — বড় কোডবেসে কম দেখা যায়।`,
+  note:`একই প্রোজেক্টে দুটোই একসাথে চলে — নিজের কোর লজিক ক্রেটে <code>thiserror</code> দিয়ে specific error enum, আর সেটাকে wrap করা বাইনারি/সার্ভিসে <code>anyhow</code> দিয়ে top-level handling। এটাই সবচেয়ে কমন প্রোডাকশন প্যাটার্ন।`,
+  code:`// library crate — thiserror
+#[derive(thiserror::Error, Debug)]
+enum StoreError {
+    #[error("আইটেম পাওয়া যায়নি: {id}")]
+    NotFound { id: u64 },
+    #[error("ডাটাবেজ এরর")]
+    Db(#[from] sqlx::Error),
+}
+// application crate — anyhow
+fn run() -> anyhow::Result<()> {
+    let cfg = load_config().context("কনফিগ লোড করতে ব্যর্থ")?;
+    Ok(())
+}`,
+  tags:["thiserror","anyhow","eyre","error handling"]
+},
+{
+  id:"2.3", part:"p2",
+  en:"? Operator & From Conversions", bn:"? অপারেটর ও এরর বাউন্ডারি ডিজাইন",
+  what:`<code>?</code> অপারেটর একটা <code>Result</code>-রিটার্নিং ফাংশনে ভেতরের কোনো <code>Err</code> পেলে সাথে সাথে সেটা ফাংশন থেকে রিটার্ন করে দেয় — সাথে <code>From</code> ট্রেইট দিয়ে অটোমেটিক্যালি এরর টাইপ কনভার্ট করে।`,
+  where:`একাধিক লেয়ারের কোড (যেমন HTTP handler → service layer → database layer) — প্রতিটা লেয়ারের নিজস্ব এরর টাইপ থাকতে পারে, <code>?</code> + <code>From</code> দিয়ে সেগুলো উপরে প্রোপাগেট হয়ে টপ-লেভেল এরর টাইপে কনভার্ট হয়।`,
+  why:`ম্যানুয়ালি প্রতিটা <code>match result { Ok(v) => v, Err(e) => return Err(e.into()) }</code> লেখার চেয়ে <code>?</code> অনেক পরিষ্কার। কিন্তু আসল স্কিল হলো এরর বাউন্ডারি ডিজাইন করা — প্রতিটা লেয়ারের নিজের এরর টাইপ রাখা উচিত (leaky abstraction এড়াতে), আর <code>#[from]</code> (thiserror) দিয়ে নিচের লেয়ারের এরর উপরের লেয়ারের এরর এনামে wrap করা।`,
+  alt:`কিছু প্রোজেক্ট সব জায়গায় একই গ্লোবাল <code>AppError</code> enum ব্যবহার করে সরলতার জন্য — ছোট প্রোজেক্টে ঠিক আছে, কিন্তু বড় হলে এটা একটা "গড ইনাম" হয়ে যায় যেখানে সবকিছু মিশে থাকে এবং ডিপেন্ডেন্সি বাউন্ডারি অস্পষ্ট হয়ে যায়।`,
+  note:`<code>?</code> অপারেটরের এরর কনভার্সন কম্পাইল-টাইমেই চেক হয় — যদি <code>From</code> ইমপ্লিমেন্টেশন না থাকে, কম্পাইলার এরর দেখাবে। এটাকে "এরর টাইপের মধ্যে missing bridge" হিসেবে পড়তে শেখো, বাগ না।`,
+  code:`impl From<sqlx::Error> for ServiceError {
+    fn from(e: sqlx::Error) -> Self { ServiceError::Db(e) }
+}
+async fn get_user(id: u64) -> Result<User, ServiceError> {
+    let row = sqlx::query_as("SELECT * FROM users WHERE id = ?")
+        .bind(id)
+        .fetch_one(&pool)
+        .await?;   // sqlx::Error → ServiceError, অটো কনভার্ট
+    Ok(row)
+}`,
+  tags:["? operator","From","error propagation"]
+},
+/* ================= PART 3 — CONCURRENCY & ASYNC ================= */
+{
+  id:"3.1", part:"p3",
+  en:"Threads vs Async", bn:"OS Thread নাকি async — কখন কোনটা",
+  what:`OS থ্রেড ভারী (প্রতিটার নিজস্ব স্ট্যাক, কনটেক্সট সুইচ কস্টলি) কিন্তু সিম্পল মেন্টাল মডেল। Async টাস্ক হালকা (হাজার হাজার টাস্ক একটা থ্রেডেই চলতে পারে, cooperative scheduling) কিন্তু নিজস্ব জটিলতা আনে (runtime দরকার, blocking কোড ভুল জায়গায় দিলে পুরো executor আটকে যায়)।`,
+  where:`I/O-বাউন্ড ওয়ার্কলোড (নেটওয়ার্ক সার্ভার, হাজার হাজার concurrent কানেকশন) — async এর জন্য আদর্শ কেস। CPU-বাউন্ড ওয়ার্কলোড (image processing, heavy computation) — সেখানে থ্রেড (বা <code>rayon</code>) বেশি উপযুক্ত, async কোনো বাড়তি সুবিধা দেয় না।`,
+  why:`একটা কমন প্রোডাকশন ভুল: সব জায়গায় async ব্যবহার করা কারণ "এটাই modern"। কিন্তু CPU-heavy কাজ async ফাংশনের ভেতরে blocking ভাবে চালালে (যেমন ভারী গণনা <code>.await</code> ছাড়া) পুরো tokio runtime এর worker থ্রেড ব্লক হয়ে যায়, অন্য সব টাস্ক আটকে থাকে। ছোট, সিম্পল CLI টুল বা batch job এ প্লেইন থ্রেড/synchronous কোডই সহজ এবং যথেষ্ট — অপ্রয়োজনীয় async জটিলতা যোগ করার দরকার নেই।`,
+  alt:`<code>rayon</code> ক্রেট CPU-বাউন্ড ডেটা-প্যারালালিজমের জন্য (যেমন একটা বড় Vec এর উপর প্যারালাল map) async এর চেয়ে অনেক সহজ এবং সঠিক টুল — <code>.par_iter()</code> দিয়ে iterator কে প্যারালাল বানানো যায় প্রায় কোনো বাড়তি জটিলতা ছাড়াই।`,
+  note:`রুল অফ থাম্ব: "আমি কি নেটওয়ার্ক/ডিস্ক এর জন্য wait করছি?" হলে async। "আমি কি CPU দিয়ে গণনা করছি?" হলে thread/rayon। দুটো মিশ্রিত ওয়ার্কলোডে <code>tokio::task::spawn_blocking</code> দিয়ে CPU-heavy অংশ আলাদা থ্রেড পুলে সরিয়ে দাও।`,
+  code:`// CPU-bound কাজ async runtime এর ভেতরে ব্লক না করে
+// spawn_blocking এ পাঠাও:
+let result = tokio::task::spawn_blocking(move || {
+    heavy_computation(data)   // sync, CPU-bound
+}).await?;`,
+  tags:["threads","async","rayon","spawn_blocking"]
+},
+{
+  id:"3.2", part:"p3",
+  en:"The Tokio Ecosystem", bn:"tokio — De Facto Standard Async Runtime",
+  what:`Rust এর std লাইব্রেরিতে কোনো বিল্ট-ইন async runtime নেই (শুধু <code>Future</code> ট্রেইট আর <code>async</code>/<code>await</code> সিনট্যাক্স) — runtime বেছে নিতে হয় একটা ক্রেট থেকে। <code>tokio</code> সবচেয়ে বহুল ব্যবহৃত, ম্যাচিউর, এবং প্রায় পুরো ইকোসিস্টেম (axum, tonic, hyper, sqlx) এটার উপর নির্ভর করে।`,
+  where:`প্রায় যেকোনো প্রোডাকশন async Rust সার্ভিস — HTTP সার্ভার, gRPC সার্ভার, background worker, WebSocket সার্ভার।`,
+  why:`<code>async-std</code> এবং <code>smol</code> ও আছে, কিন্তু ২০২৬ সালে ইকোসিস্টেমের ভরকেন্দ্র সম্পূর্ণভাবে tokio-র দিকে — বেশিরভাগ জনপ্রিয় ক্রেট শুধু tokio এর সাথে কম্প্যাটিবল ভাবে টেস্ট/ডিজাইন করা হয়। নতুন প্রোজেক্টে অন্য রানটাইম বাছলে অনেক ক্রেটের সাথে ইন্টিগ্রেশন সমস্যা হতে পারে (feature flag মিসম্যাচ, ইনকম্প্যাটিবল executor)।`,
+  alt:`<code>smol</code> খুব হালকা এবং embedded/সীমিত রিসোর্স কনটেক্সটে ভালো, কিন্তু ইকোসিস্টেম সাপোর্ট সীমিত। <code>async-std</code> এখন প্রায় maintenance mode এ। নতুন প্রোজেক্টে না জেনে অন্য কিছু বাছার কোনো ভালো কারণ নেই — tokio ডিফল্ট চয়েস হওয়া উচিত।`,
+  note:`<code>tokio</code> এর ফিচার ফ্ল্যাগ সাবধানে বাছো — <code>full</code> ফিচার সব ইনক্লুড করে (ডেভে সুবিধাজনক) কিন্তু প্রোডাকশন বিল্ডে শুধু দরকারি ফিচার (<code>rt-multi-thread</code>, <code>net</code>, <code>macros</code>, ইত্যাদি) এনাবল করলে কম্পাইল টাইম এবং বাইনারি সাইজ কমে।`,
+  code:`#[tokio::main]
+async fn main() {
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await.unwrap();
+    loop {
+        let (socket, _) = listener.accept().await.unwrap();
+        tokio::spawn(async move { handle(socket).await; });
+    }
+}`,
+  tags:["tokio","async runtime","async-std","smol"]
+},
+{
+  id:"3.3", part:"p3",
+  en:"Send + Sync, Shared State vs Channels", bn:"Arc<Mutex<>> নাকি Channel — শেয়ারড স্টেট ডিজাইন",
+  what:`<code>Send</code> মানে একটা টাইপ থ্রেডের মধ্যে move করা সেফ, <code>Sync</code> মানে একটা টাইপের রেফারেন্স একাধিক থ্রেড থেকে শেয়ার করা সেফ — compiler এই দুটো মার্কার ট্রেইট দিয়ে অটোমেটিক্যালি ডেটা রেস কম্পাইল-টাইমে আটকায়। এর উপর ভিত্তি করে দুইটা concurrency প্যাটার্ন — শেয়ার্ড স্টেট (<code>Arc&lt;Mutex&lt;T&gt;&gt;</code>) বনাম মেসেজ পাসিং (<code>mpsc</code> চ্যানেল)।`,
+  where:`একাধিক async টাস্ক/থ্রেডের মধ্যে ডেটা শেয়ার করার প্রয়োজন হলেই — কানেকশন পুল, ক্যাশ, কাউন্টার, ইনক্রিমেন্টাল স্টেট।`,
+  why:`<code>Arc&lt;Mutex&lt;T&gt;&gt;</code> সহজ এবং ছোট কেসে ঠিক আছে, কিন্তু বড় সিস্টেমে lock contention, deadlock (একাধিক lock ভিন্ন অর্ডারে নিলে), এবং "কে কখন lock ধরে আছে" ট্র্যাক করা কঠিন হয়ে যায়। মেসেজ পাসিং (একটা টাস্ক ডেটার "মালিক", বাকিরা চ্যানেলের মাধ্যমে রিকোয়েস্ট পাঠায়) — এই "actor-এর মতো" প্যাটার্নে lock-ই লাগে না, ডেটা রেস সম্পূর্ণভাবে ডিজাইন থেকে বাদ পড়ে যায়। Rust কমিউনিটির প্রচলিত পরামর্শ: "Do not communicate by sharing memory; share memory by communicating" (মূলত Go থেকে ধার করা দর্শন, Rust এও সমান প্রযোজ্য)।`,
+  alt:`ছোট, কম-কনটেনশন কেসে (যেমন একটা সিম্পল metrics কাউন্টার) <code>Arc&lt;Mutex&lt;T&gt;&gt;</code>-ই সবচেয়ে সহজ এবং যথেষ্ট — অকারণে চ্যানেল-বেসড আর্কিটেকচারে ওভার-ইঞ্জিনিয়ার করার দরকার নেই। জটিলতা যোগ করার আগে আসল contention সমস্যা আছে কিনা প্রোফাইল করে দেখাই ভালো।`,
+  note:`Deadlock এড়ানোর সবচেয়ে সহজ নিয়ম: একসাথে একের বেশি lock কখনো ধরে রাখার দরকার হলে, পুরো কোডবেসে সবসময় একই অর্ডারে lock নাও। সন্দেহ থাকলে, একটা lock ছেড়ে দিয়ে তারপর পরেরটা নাও।`,
+  code:`// message-passing pattern — একটা টাস্কই স্টেট owns করে
+let (tx, mut rx) = tokio::sync::mpsc::channel(32);
+tokio::spawn(async move {
+    let mut state = HashMap::new();     // কোনো lock লাগছে না
+    while let Some(cmd) = rx.recv().await {
+        // handle cmd, mutate state safely — single owner
+    }
+});`,
+  tags:["Send","Sync","Arc","Mutex","channels","mpsc"]
+},
+{
+  id:"3.4", part:"p3",
+  en:"Async Traits — Native vs async-trait crate", bn:"Trait-এ async fn — এখন কতটা স্থিতিশীল",
+  what:`২০২৩-২০২৫ পর্যন্ত ট্রেইটে সরাসরি <code>async fn</code> লেখা সম্ভব ছিল না — সবাই <code>async-trait</code> ক্রেট (প্রতি কলে heap allocation করে) ব্যবহার করত। Rust ১.৭৫+ থেকে native <code>async fn in traits</code> স্টেবল, এবং ২০২৬ নাগাদ static dispatch এ ভালোভাবে কাজ করে।`,
+  where:`যেকোনো ট্রেইট-ভিত্তিক অ্যাবস্ট্রাকশন যেখানে মেথড async হতে হবে — যেমন রিপোজিটরি প্যাটার্ন (<code>trait UserRepo { async fn find(&self, id: u64) -> Result<User>; }</code>), HTTP ক্লায়েন্ট abstraction, টেস্টের জন্য mock করা যায় এমন সার্ভিস লেয়ার।`,
+  why:`Native <code>async fn</code> in trait স্ট্যাটিক ডিসপ্যাচে (generics দিয়ে) ভালো কাজ করে এবং heap allocation লাগে না — কিন্তু এখনও একটা বড় সীমাবদ্ধতা আছে: এটা <b>object-safe না</b>, অর্থাৎ <code>dyn MyTrait</code> বানানো যায় না যদি ট্রেইটে async মেথড থাকে। যদি প্রোজেক্টে <code>Vec&lt;Box&lt;dyn Repo&gt;&gt;</code> এর মতো dynamic dispatch দরকার হয়, তাহলে এখনও <code>async-trait</code> ক্রেট (যেটা internally <code>Box::pin</code> দিয়ে wrap করে দেয়) ব্যবহার করতে হবে — এই heap allocation কস্ট প্রায় সব অ্যাপ্লিকেশনের জন্য নগণ্য, তবে extremely hot path এ (প্রতি সেকেন্ডে লাখো কল) বিবেচনায় রাখা উচিত।`,
+  alt:`Send bound নিয়ে native async trait এখনও কিছুটা খসখসে — generic ফাংশনে <code>async fn</code> trait bound এর সাথে <code>Send</code> রিকয়ারমেন্ট মেলানো মাঝেমধ্যে জটিল এরর মেসেজ দেয়। এমন কেসে এখনও <code>async-trait</code> ক্রেট সহজ সমাধান দেয় (ergonomics এর বিনিময়ে সামান্য পারফরম্যান্স কস্ট)।`,
+  note:`২০২৬ এ নতুন প্রোজেক্টে প্রথমে native <code>async fn in trait</code> দিয়ে শুরু করো (static dispatch হলে)। শুধু <code>dyn Trait</code> সত্যিই দরকার হলে (plugin-এর মতো architecture) তখনই <code>async-trait</code> ম্যাক্রোতে যাও।`,
+  code:`// native — object-safe না, static dispatch এ perfect
+trait UserRepo {
+    async fn find(&self, id: u64) -> Result<User, Error>;
+}
+// dyn dispatch দরকার হলে async-trait crate লাগবে:
+// #[async_trait::async_trait]
+// trait UserRepo { async fn find(&self, id: u64) -> Result<User, Error>; }`,
+  tags:["async traits","async-trait","object safety","RPITIT"]
+},
+{
+  id:"3.5", part:"p3",
+  en:"Graceful Shutdown & Backpressure", bn:"গ্রেসফুল শাটডাউন ও ব্যাকপ্রেশার",
+  what:`প্রোডাকশন সার্ভিসকে হুট করে kill করলে ইন-ফ্লাইট রিকোয়েস্ট হারিয়ে যায়/করাপ্ট হয়। "গ্রেসফুল শাটডাউন" মানে সিগন্যাল (SIGTERM) পেলে নতুন রিকোয়েস্ট নেওয়া বন্ধ করা, চলতি কাজগুলো শেষ করতে দেওয়া, তারপর বন্ধ হওয়া। "ব্যাকপ্রেশার" মানে সিস্টেম ওভারলোড হলে নতুন কাজ প্রত্যাখ্যান/স্লো-ডাউন করা, বরং ক্র্যাশ বা মেমরি ফুরিয়ে যাওয়ার চেয়ে।`,
+  where:`যেকোনো লং-রানিং সার্ভিস যেটা Kubernetes/Docker এ ডিপ্লয় হয় (rolling deploy এর সময় পুরনো পড টার্মিনেট হওয়ার আগে সিগন্যাল পায়), কিউ-বেসড ওয়ার্কার, কানেকশন পুল।`,
+  why:`গ্রেসফুল শাটডাউন ছাড়া প্রতিটা ডিপ্লয়ে ব্যবহারকারীরা এরর পায় (হাফ-প্রসেসড রিকোয়েস্ট), এমনকি ডেটা করাপশনও হতে পারে (যদি ডাটাবেজ ট্রানজেকশন মাঝপথে কাটা যায়)। ব্যাকপ্রেশার ছাড়া, একটা সাডেন ট্রাফিক স্পাইক সার্ভিসকে হয় ক্র্যাশ করাবে (আনবাউন্ডেড queue মেমরি খেয়ে ফেলবে) নয়তো ধীরে ধীরে সব রিকোয়েস্টকে টাইমআউট করাবে — bounded চ্যানেল/কিউ ব্যবহার করলে সিস্টেম "ফেইল ফাস্ট" করে, যেটা প্রোডাকশনে বেশি predictable এবং debuggable।`,
+  alt:`কিছু টিম শুধু লোড ব্যালেন্সারের health check এর উপর নির্ভর করে ("আনহেলদি হলে ট্রাফিক পাঠানো বন্ধ") — এটা প্রয়োজনীয় কিন্তু যথেষ্ট না, কারণ শাটডাউনের ঠিক আগমুহূর্তের রিকোয়েস্টগুলো তাও হারিয়ে যেতে পারে। অ্যাপ-লেভেল গ্রেসফুল শাটডাউন লজিক ছাড়া কোনো বিকল্প নেই যদি জিরো-ডাউনটাইম ডিপ্লয় দরকার হয়।`,
+  note:`<code>tokio::signal::ctrl_c()</code> বা <code>tokio::signal::unix::signal(SignalKind::terminate())</code> দিয়ে SIGTERM ক্যাচ করে, একটা shutdown broadcast চ্যানেল দিয়ে সব টাস্ককে জানানো — এটাই সবচেয়ে কমন প্রোডাকশন প্যাটার্ন। axum-এর নিজস্ব <code>with_graceful_shutdown()</code> হেল্পার আছে।`,
+  code:`let (shutdown_tx, _) = tokio::sync::broadcast::channel::<()>(1);
+tokio::spawn({
+    let tx = shutdown_tx.clone();
+    async move {
+        tokio::signal::ctrl_c().await.ok();
+        let _ = tx.send(());   // সব শোনা টাস্ককে জানিয়ে দাও
+    }
+});`,
+  tags:["graceful shutdown","backpressure","SIGTERM","tokio::signal"]
+},
+/* ================= PART 4 — WEB, NETWORKING & DB ================= */
+{
+  id:"4.1", part:"p4",
+  en:"axum vs actix-web vs Rocket", bn:"ওয়েব ফ্রেমওয়ার্ক বাছাই (2026 আপডেট)",
+  what:`তিনটাই HTTP সার্ভার বানানোর ফ্রেমওয়ার্ক, কিন্তু ভিন্ন দর্শন — <code>axum</code> Tower middleware ইকোসিস্টেম আর tokio টিমের নিজস্ব প্রজেক্ট, extractor-বেসড টাইপ-সেফ হ্যান্ডলার। <code>actix-web</code> actor-মডেল ভিত্তিক, সবচেয়ে বেশি raw থ্রুপুট। <code>Rocket</code> সবচেয়ে beginner-friendly, "batteries included" ergonomics।`,
+  where:`REST API, gRPC গেটওয়ে, ওয়েবহুক হ্যান্ডলার, মাইক্রোসার্ভিস — যেকোনো HTTP-ভিত্তিক ব্যাকএন্ড।`,
+  why:`২০২৬ সালের কমিউনিটি কনসেনসাস মোটামুটি স্পষ্ট: বেশিরভাগ নতুন প্রোজেক্টের জন্য <code>axum</code>-ই pragmatic ডিফল্ট — কারণ tokio-র সাথে টাইট ইন্টিগ্রেশন, compile-time এ হ্যান্ডলার সিগনেচার ভ্যালিডেট হওয়া (extractor ভুল হলে কম্পাইল এরর), এবং Tower এর মিডলওয়্যার ইকোসিস্টেম (rate limiting, timeout, tracing — সব প্লাগ-অ্যান্ড-প্লে)। <code>actix-web</code> এখনো বেঞ্চমার্কে প্রায় ১০-১৫% বেশি রিকোয়েস্ট/সেকেন্ড দেয় হাই-থ্রুপুট লোডে — অ্যাড এক্সচেঞ্জ, রিয়েল-টাইম বিডিং, অ্যানালিটিক্স ইনজেশনের মতো জায়গায় যেখানে সেই পার্থক্যটা সত্যিই ম্যাটার করে, সেখানে এখনও প্রথম পছন্দ। actix-এর actor মডেল স্টেটফুল, single-writer queue-এর মতো কাজেও প্রাকৃতিকভাবে ফিট করে।`,
+  alt:`<code>Rocket</code> শেখার জন্য চমৎকার (কম বয়লারপ্লেট, আরামদায়ক এরর মেসেজ) কিন্তু প্রোডাকশন ইকোসিস্টেম axum/actix এর তুলনায় ছোট। <code>Warp</code> এবং <code>Salvo</code>ও আছে কিন্তু ছোট কমিউনিটি — নতুন প্রোজেক্টে সাধারণত এড়িয়ে চলাই ভালো যদি না কোনো নির্দিষ্ট ফিচারের জন্য দরকার হয়।`,
+  note:`দল যদি ইতিমধ্যে actix-web এ ১৮ মাস ধরে কোড লিখে থাকে এবং সিস্টেম স্টেবল, শুধু "axum বেশি মডার্ন" বলে রিরাইট করার কোনো মানে নেই — মাইগ্রেশনের কস্ট প্রায় সবসময় সুবিধার চেয়ে বেশি স্থিতিশীল সার্ভিসে।`,
+  code:`use axum::{routing::get, Router, extract::Path};
+async fn get_user(Path(id): Path<u64>) -> String {
+    format!("user #{id}")     // extractor থেকে টাইপ-সেফ ভাবে id পাওয়া গেলো
+}
+let app = Router::new().route("/users/{id}", get(get_user));`,
+  tags:["axum","actix-web","Rocket","Tower","web framework"]
+},
+{
+  id:"4.2", part:"p4",
+  en:"Serde — Serialization", bn:"serde — JSON/YAML/TOML সিরিয়ালাইজেশন",
+  what:`<code>serde</code> (SERialize/DEserialize) হলো Rust এর ডি-ফ্যাক্টো সিরিয়ালাইজেশন ফ্রেমওয়ার্ক — <code>#[derive(Serialize, Deserialize)]</code> দিয়ে যেকোনো struct/enum কে JSON, YAML, TOML, MessagePack, বাইনারি ফরম্যাটে কনভার্ট করা যায়, কোনো ফরম্যাট-নির্দিষ্ট কোড নিজে লিখতে হয় না।`,
+  where:`API রিকোয়েস্ট/রেসপন্স বডি, কনফিগ ফাইল পার্সিং (TOML/YAML), মেসেজ কিউ পেলোড, ডাটাবেজ JSON কলাম।`,
+  why:`serde নিজে ফরম্যাট-অ্যাগনস্টিক — <code>serde_json</code>, <code>serde_yaml</code>, <code>toml</code> — সব একই derive ম্যাক্রো ব্যবহার করে, তাই একটা struct একাধিক ফরম্যাটে সিরিয়ালাইজ করতে হলে ট্রেইট ইমপ্লিমেন্ট একবারই লাগে। এটা এতটাই স্ট্যান্ডার্ড হয়ে গেছে যে axum, sqlx, config — প্রায় সব ক্রেট নিজে থেকেই serde সাপোর্ট করে।`,
+  alt:`পারফরম্যান্স-ক্রিটিক্যাল কেসে (যেমন লক্ষ লক্ষ ছোট মেসেজ) <code>serde_json</code> এর বদলে <code>simd-json</code> (SIMD-অ্যাক্সিলারেটেড JSON parsing) বা বাইনারি ফরম্যাট (<code>bincode</code>, <code>rmp-serde</code> for MessagePack) অনেক ফাস্টার — কিন্তু human-readable/debuggable-এর সুবিধা হারায়। বেশিরভাগ প্রোজেক্টে এই মাইক্রো-অপ্টিমাইজেশনের দরকারই হয় না।`,
+  note:`<code>#[serde(rename_all = "camelCase")]</code> এর মতো attribute দিয়ে Rust এর snake_case কনভেনশন আর JS/JSON এর camelCase কনভেনশনের মধ্যে সেতু বানানো যায় — ফ্রন্টএন্ড টিমের সাথে কাজ করার সময় খুব কমন প্র্যাকটিস।`,
+  code:`#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct User {
+    user_id: u64,        // JSON এ হবে "userId"
+    display_name: String,
+}`,
+  tags:["serde","JSON","serialization","serde_json"]
+},
+{
+  id:"4.3", part:"p4",
+  en:"reqwest & hyper", bn:"HTTP ক্লায়েন্ট — reqwest বনাম hyper",
+  what:`<code>hyper</code> হলো লো-লেভেল HTTP লাইব্রেরি (axum, reqwest সহ প্রায় সবকিছুর ভিত্তি)। <code>reqwest</code> হলো hyper এর উপর বানানো high-level, ergonomic HTTP ক্লায়েন্ট — connection pooling, JSON, cookies, redirect handling সব বিল্ট-ইন।`,
+  where:`বাইরের API কল করা (থার্ড-পার্টি সার্ভিস ইন্টিগ্রেশন, ওয়েবহুক পাঠানো, মাইক্রোসার্ভিসের মধ্যে যোগাযোগ)।`,
+  why:`৯৫% ব্যবহারিক ক্ষেত্রে <code>reqwest</code>-ই ঠিক টুল — connection pool রিইউজ, retry, timeout সব সহজে সেটআপ করা যায়। <code>hyper</code> সরাসরি ব্যবহার করার দরকার তখনই হয় যখন নিজের প্রোটোকল-লেভেল কাস্টমাইজেশন লাগে (কাস্টম HTTP সার্ভার/ক্লায়েন্ট লাইব্রেরি বানানো) — বেশিরভাগ অ্যাপ্লিকেশন কোডে hyper সরাসরি টাচ করার দরকার নেই।`,
+  alt:`<code>ureq</code> একটা সিম্পল, সিঙ্ক্রোনাস (non-async) HTTP ক্লায়েন্ট — ছোট CLI টুলে যেখানে পুরো tokio runtime আনার দরকার নেই, সেখানে হালকা বিকল্প।`,
+  note:`<code>reqwest::Client</code> একবার বানিয়ে পুরো অ্যাপ্লিকেশনে reuse করো (Arc দিয়ে শেয়ার করে বা global static হিসেবে) — প্রতি রিকোয়েস্টে নতুন Client বানালে connection pooling এর সুবিধাই পাওয়া যায় না, প্রতিবার নতুন TCP/TLS হ্যান্ডশেক লাগে।`,
+  code:`let client = reqwest::Client::new();   // একবার বানাও, reuse করো
+let res: MyResponse = client.get("https://api.example.com/data")
+    .timeout(std::time::Duration::from_secs(5))
+    .send().await?
+    .json().await?;`,
+  tags:["reqwest","hyper","HTTP client"]
+},
+{
+  id:"4.4", part:"p4",
+  en:"sqlx vs Diesel vs SeaORM", bn:"ডাটাবেজ লাইব্রেরি — কোনটা কেন",
+  what:`তিনটা আলাদা দর্শন। <code>sqlx</code> — raw SQL লেখো, কিন্তু compile-time এ query ভ্যালিডেট হয় (ডাটাবেজের সাথে কানেক্ট করে টাইপ চেক করে) — "compile-time checked SQL"। <code>Diesel</code> — ফুল ORM, query builder DSL, নিজস্ব schema макro সিস্টেম। <code>SeaORM</code> — async-first, ActiveRecord-স্টাইল ORM, sqlx এর উপরেই বানানো।`,
+  where:`যেকোনো রিলেশনাল ডাটাবেজ (PostgreSQL, MySQL, SQLite) এর সাথে কাজ করা ব্যাকএন্ড সার্ভিস।`,
+  why:`<code>sqlx</code> এর সবচেয়ে বড় সুবিধা: SQL লজিক সম্পূর্ণ visible এবং কন্ট্রোলে থাকে (কোনো "ORM ম্যাজিক" নেই যা অদক্ষ query জেনারেট করতে পারে), অথচ <code>sqlx::query!</code> ম্যাক্রো কম্পাইল টাইমেই কলাম নাম/টাইপ ভুল ধরে ফেলে — রানটাইম SQL এরর অনেকটাই কমে যায়। ডেভেলপার যারা SQL-এ কমফোর্টেবল, তাদের জন্য এটাই সবচেয়ে জনপ্রিয় ২০২৬ এর ডিফল্ট চয়েস। <code>Diesel</code> এর টাইপ-সেফ query builder শক্তিশালী কিন্তু শেখার কার্ভ খাড়া, আর কম্পাইল টাইম Diesel এর ম্যাক্রো-হেভি স্কিমার জন্য বেশি হতে পারে বড় প্রোজেক্টে।`,
+  alt:`ORM-স্টাইল abstraction পছন্দ হলে (অন্য ভাষা থেকে আসা টিমের জন্য পরিচিত মনে হতে পারে) <code>SeaORM</code> ভালো অপশন। তবে মনে রাখা দরকার — জটিল query তে ORM প্রায়ই সাব-অপটিমাল SQL জেনারেট করে; কমপ্লেক্স রিপোর্টিং query তে raw sqlx এ নেমে আসতে হতেই পারে।`,
+  note:`<code>sqlx::query!</code> ম্যাক্রোর কম্পাইল-টাইম চেকের জন্য একটা লাইভ ডাটাবেজ কানেকশন (বা <code>.sqlx</code> অফলাইন ক্যাশ ফাইল) লাগে বিল্ড টাইমে — CI পাইপলাইনে এটা সেটআপ করতে ভুলো না, নাহলে বিল্ড ফেইল করবে।`,
+  code:`// compile-time checked — কলাম নাম ভুল হলে build fail করবে
+let user = sqlx::query_as!(
+    User,
+    "SELECT id, name, email FROM users WHERE id = $1",
+    user_id
+).fetch_one(&pool).await?;`,
+  tags:["sqlx","Diesel","SeaORM","database"]
+},
+{
+  id:"4.5", part:"p4",
+  en:"tonic — gRPC", bn:"tonic — gRPC সার্ভিস (সংক্ষিপ্ত)",
+  what:`<code>tonic</code> হলো Rust এর প্রধান gRPC ফ্রেমওয়ার্ক — Protocol Buffers (<code>.proto</code> ফাইল) থেকে Rust কোড অটো-জেনারেট করে, tokio/hyper এর উপর বানানো, HTTP/2 ব্যবহার করে।`,
+  where:`মাইক্রোসার্ভিসের মধ্যে ইন্টারনাল যোগাযোগ (RPC), স্ট্রিমিং API, যেখানে টাইপ-সেফ, ভাষা-স্বাধীন (polyglot) কন্ট্রাক্ট দরকার (অন্য সার্ভিস Go/Python/Java দিয়ে লেখা হলেও একই <code>.proto</code> শেয়ার করা যায়)।`,
+  why:`পাবলিক-ফেসিং REST API এর জন্য gRPC ওভারকিল — ব্রাউজার-ফ্রেন্ডলি না (gRPC-Web দরকার), debugging কঠিন (বাইনারি প্রোটোকল, curl দিয়ে সহজে টেস্ট করা যায় না)। কিন্তু ইন্টারনাল সার্ভিস-টু-সার্ভিস কমিউনিকেশনে gRPC এর স্ট্রং টাইপিং, স্ট্রিমিং সাপোর্ট, আর পারফরম্যান্স (বাইনারি এনকোডিং, HTTP/2 মাল্টিপ্লেক্সিং) REST/JSON এর চেয়ে অনেক এগিয়ে।`,
+  alt:`ইন্টারনাল সার্ভিসেও অনেক টিম সিম্পলিসিটির জন্য শুধু JSON+REST (axum দিয়ে) ব্যবহার করে — যদি টিম ছোট, সার্ভিস সংখ্যা কম, আর ডিবাগ-ইজি প্রায়োরিটি হয়, তাহলে এটাও একটা যুক্তিসঙ্গত সিদ্ধান্ত। gRPC এর আসল সুবিধা স্কেলে (অনেক সার্ভিস, পলিগ্লট টিম) বোঝা যায়।`,
+  note:`gRPC দরকার নেই এমন প্রোজেক্টে এটা যোগ করলে অপ্রয়োজনীয় জটিলতা যোগ হয় (proto ফাইল মেইনটেনেন্স, কোডজেন পাইপলাইন) — "আমাদের কি সত্যিই ভাষা-স্বাধীন স্ট্রিমিং RPC দরকার?" এই প্রশ্নটা আগে করা উচিত।`,
+  tags:["tonic","gRPC","protobuf"]
+},
+/* ================= PART 5 — TESTING & QUALITY ================= */
+{
+  id:"5.1", part:"p5",
+  en:"Unit + Integration Tests", bn:"cargo test — শুধু শুরু",
+  what:`Rust এ টেস্টিং ভাষার মধ্যেই বিল্ট-ইন — <code>#[test]</code> attribute দিয়ে ইউনিট টেস্ট, <code>tests/</code> ফোল্ডারে integration টেস্ট (public API কে বাইরে থেকে যেভাবে ব্যবহারকারী করবে ঠিক সেভাবে টেস্ট করা)।`,
+  where:`প্রতিটা crate — ইউনিট টেস্ট মডিউলের ভেতরেই (<code>#[cfg(test)] mod tests { ... }</code>), ইন্টিগ্রেশন টেস্ট আলাদা <code>tests/</code> ডিরেক্টরিতে।`,
+  why:`ইউনিট টেস্ট প্রাইভেট ফাংশনও টেস্ট করতে পারে (একই ফাইলে থাকে বলে), দ্রুত রান হয়। ইন্টিগ্রেশন টেস্ট শুধু পাবলিক API টেস্ট করে, বেশি রিয়েলিস্টিক কিন্তু ধীর (প্রতিটা আলাদা বাইনারি হিসেবে কম্পাইল হয়)। প্রোডাকশন-গ্রেড প্রোজেক্টে দুটোরই দরকার — ইউনিট টেস্ট এজ কেস আর ইন্টারনাল লজিকের জন্য, ইন্টিগ্রেশন টেস্ট "পুরো সিস্টেম একসাথে ঠিকমতো কাজ করছে কিনা" ভ্যালিডেট করার জন্য।`,
+  alt:`ডাটাবেজ-নির্ভর ইন্টিগ্রেশন টেস্টে <code>testcontainers</code> ক্রেট দিয়ে প্রতি টেস্ট রানে একটা আসল Postgres/Redis Docker কন্টেইনার স্পিন আপ করা যায় — mock ডাটাবেজের চেয়ে অনেক বেশি বিশ্বাসযোগ্য, যদিও ধীর।`,
+  note:`<code>cargo nextest</code> স্ট্যান্ডার্ড <code>cargo test</code> এর চেয়ে অনেক ফাস্টার টেস্ট রানার (প্রতিটা টেস্ট আলাদা প্রসেসে চালায়, ভালো আউটপুট ফরম্যাট) — বড় টেস্ট স্যুটে CI টাইম উল্লেখযোগ্যভাবে কমায়।`,
+  code:`#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn adds_correctly() {
+        assert_eq!(add(2, 3), 5);
+    }
+    #[tokio::test]           // async টেস্টের জন্য
+    async fn fetches_user() {
+        let user = get_user(1).await.unwrap();
+        assert_eq!(user.id, 1);
+    }
+}`,
+  tags:["testing","unit test","integration test","nextest"]
+},
+{
+  id:"5.2", part:"p5",
+  en:"Property-Based Testing", bn:"proptest / quickcheck — এজ কেস অটো-খোঁজা",
+  what:`নিজে হাতে ৫-৬টা এজ কেস ভাবার বদলে, তুমি একটা "প্রপার্টি" (invariant) লেখো যা সবসময় সত্য হওয়া উচিত — লাইব্রেরি নিজে থেকে শত শত র‍্যান্ডম ইনপুট জেনারেট করে সেটা ভাঙার চেষ্টা করে, ভাঙলে সবচেয়ে ছোট failing কেসটা ("shrinking") দেখায়।`,
+  where:`পার্সার, সিরিয়ালাইজেশন/ডিসিরিয়ালাইজেশন round-trip (encode করে decode করলে আসল ডেটা ফেরত পাওয়া উচিত), গণিতভিত্তিক ফাংশন, ডেটা স্ট্রাকচার ইনভেরিয়েন্ট।`,
+  why:`হাতে লেখা ইউনিট টেস্ট শুধু তুমি যা "ভাবতে পেরেছো" সেই কেসগুলো কভার করে — প্রোডাকশন বাগের বড় অংশ আসে এমন ইনপুট থেকে যেটা কেউ ভাবেনি (খালি string, ইউনিকোড এজ কেস, integer overflow বাউন্ডারি)। Property-based testing স্বয়ংক্রিয়ভাবে এই "কেউ ভাবেনি" স্পেসটা এক্সপ্লোর করে।`,
+  alt:`<code>quickcheck</code> সরল এবং হালকা, <code>proptest</code> বেশি ফিচার-রিচ (কাস্টম স্ট্র্যাটেজি, ভালো shrinking) — নতুন প্রোজেক্টে সাধারণত proptest রিকমেন্ডেড। ছোট ইউটিলিটি ফাংশনে (যেখানে ইনপুট স্পেস ছোট) সাধারণ ইউনিট টেস্টই যথেষ্ট, প্রতিটা ফাংশনে property test যোগ করা ওভারকিল।`,
+  note:`একটা কমন ভুল ধারণা: property testing ইউনিট টেস্ট replace করে। বাস্তবে দুটো complementary — নির্দিষ্ট, জানা এজ কেসের জন্য ইউনিট টেস্ট রাখো (রিগ্রেশন গার্ড হিসেবে), অজানা এজ কেস খোঁজার জন্য property test যোগ করো।`,
+  code:`proptest::proptest! {
+    #[test]
+    fn roundtrip(s in "\\\\PC*") {   // যেকোনো valid unicode string
+        let encoded = encode(&s);
+        assert_eq!(decode(&encoded), s);  // সবসময় সত্য হওয়া উচিত
+    }
+}`,
+  tags:["proptest","quickcheck","property testing"]
+},
+{
+  id:"5.3", part:"p5",
+  en:"Mocking with mockall", bn:"mockall — ডিপেন্ডেন্সি মক করা",
+  what:`<code>mockall</code> একটা derive-ম্যাক্রো-বেসড মকিং লাইব্রেরি — একটা ট্রেইট থেকে অটোমেটিক্যালি একটা mock struct জেনারেট করে দেয়, যেটার behavior (কী রিটার্ন করবে, কতবার কল হবে expect করা হচ্ছে) টেস্টে কনফিগার করা যায়।`,
+  where:`এমন কোড টেস্ট করা যেটা বাইরের সিস্টেমের উপর নির্ভরশীল — ডাটাবেজ, HTTP API, ফাইল সিস্টেম — কিন্তু আসল ডিপেন্ডেন্সি ছাড়াই দ্রুত, আইসোলেটেড ইউনিট টেস্ট চালাতে চাও।`,
+  why:`যেই কোড সরাসরি concrete টাইপ (যেমন <code>PgPool</code>) এর উপর নির্ভর করে, সেটা টেস্ট করতে আসল ডাটাবেজ লাগবে — ধীর, ফ্র্যাজাইল CI। যদি কোড একটা ট্রেইট (<code>trait UserRepo</code>) এর উপর নির্ভর করে ডিজাইন করা হয় (dependency injection), তাহলে টেস্টে সেই ট্রেইটের একটা mock implementation বসিয়ে দেয়া যায় — mockall এই boilerplate অটো জেনারেট করে দেয়।`,
+  alt:`ছোট, সিম্পল কেসে হাতে লেখা "fake" struct (mockall ছাড়াই, ম্যানুয়ালি ট্রেইট implement করে) যথেষ্ট এবং কম dependency যোগ করে। mockall তখনই কাজে লাগে যখন mock এর behavior বার বার, টেস্ট-কেস অনুযায়ী পাল্টাতে হয় (call count assertion, conditional return values)।`,
+  note:`Over-mocking একটা রিয়েল অ্যান্টি-প্যাটার্ন — যদি একটা টেস্টে ৫টা মক সেটআপ করতে হয়, সেটা প্রায়ই সংকেত যে কোডের ডিজাইন খুব বেশি কাপলড, রিফ্যাক্টর করার দরকার আছে।`,
+  code:`#[mockall::automock]
+trait UserRepo { fn find(&self, id: u64) -> Option<User>; }
+
+#[test]
+fn test_greet() {
+    let mut mock = MockUserRepo::new();
+    mock.expect_find().returning(|_| Some(User::default()));
+    assert_eq!(greet_user(&mock, 1), "হ্যালো!");
+}`,
+  tags:["mockall","mocking","dependency injection"]
+},
+{
+  id:"5.4", part:"p5",
+  en:"Benchmarking with Criterion", bn:"criterion — বেঞ্চমার্কিং সঠিকভাবে",
+  what:`<code>criterion</code> একটা স্ট্যাটিস্টিক্যালি রিগোরাস বেঞ্চমার্কিং ফ্রেমওয়ার্ক — শুধু "কতক্ষণ লাগলো" মাপে না, বরং একাধিক রান করে outlier বাদ দেয়, confidence interval দেয়, আর আগের রানের সাথে তুলনা করে "এই চেঞ্জটা কি সত্যিই দ্রুত/ধীর করলো, নাকি নয়েজ" সেটা পরিসংখ্যানগতভাবে বলে দেয়।`,
+  where:`পারফরম্যান্স-ক্রিটিক্যাল ফাংশন যেখানে অপ্টিমাইজেশনের দাবি ভ্যালিডেট করতে হয়, দুটো ইমপ্লিমেন্টেশনের মধ্যে তুলনা করতে হয় (এই অ্যালগরিদম নাকি ওইটা), regression ধরতে হয় (নতুন কমিট perf খারাপ করলো কিনা)।`,
+  why:`ম্যানুয়ালি <code>Instant::now()</code> দিয়ে টাইম মাপা misleading হতে পারে — CPU frequency scaling, cache warmup, background noise সব রেজাল্ট নষ্ট করতে পারে একবার রানে। Criterion এই সমস্যাগুলো পরিসংখ্যানগতভাবে হ্যান্ডল করে, এবং HTML রিপোর্ট বানায় যেখানে distribution, regression গ্রাফ দেখা যায়।`,
+  alt:`নাইটলি Rust এ বিল্ট-ইন <code>#[bench]</code> আছে কিন্তু সেটা স্টেবল চ্যানেলে নেই এবং criterion এর তুলনায় অনেক কম ফিচার-রিচ — প্রোডাকশন প্রোজেক্টে প্রায় সবসময় criterion ই ব্যবহার হয়।`,
+  note:`বেঞ্চমার্ক লেখার সময় compiler যেন optimize করে পুরো কোডটা বাদ না দেয় (dead code elimination) সেজন্য <code>black_box()</code> ব্যবহার করা জরুরি — নাহলে "অবিশ্বাস্য রকম ফাস্ট" রেজাল্ট পেতে পারো যেটা আসলে মিথ্যা (কম্পাইলার পুরো কম্পিউটেশনটাই বাদ দিয়ে দিয়েছে)।`,
+  code:`fn bench_fib(c: &mut criterion::Criterion) {
+    c.bench_function("fib 20", |b| {
+        b.iter(|| fibonacci(criterion::black_box(20)))
+    });
+}`,
+  tags:["criterion","benchmarking","black_box"]
+},
+{
+  id:"5.5", part:"p5",
+  en:"Fuzzing & Coverage", bn:"cargo-fuzz ও কোড কভারেজ",
+  what:`Fuzzing মানে সম্পূর্ণ র‍্যান্ডম/মিউটেটেড ইনপুট দিয়ে প্রোগ্রাম ক্র্যাশ করানোর চেষ্টা করা (<code>cargo-fuzz</code>, libFuzzer-এর উপর বানানো) — panic, memory safety bug, infinite loop খুঁজে বের করে। কোড কভারেজ (<code>cargo-llvm-cov</code>) মাপে টেস্ট স্যুট কোডের কত শতাংশ actually এক্সিকিউট করে।`,
+  where:`Fuzzing — parser, ডিসিরিয়ালাইজার, যেকোনো কোড যা untrusted, বাইরের ইনপুট নেয় (নেটওয়ার্ক প্যাকেট, ফাইল ফরম্যাট)। কোড কভারেজ — CI পাইপলাইনে টেস্ট কোয়ালিটির একটা metric হিসেবে।`,
+  why:`Fuzzing সেই বাগগুলো খুঁজে বের করে যেগুলো মানুষ কখনো টেস্ট কেস হিসেবে ভাবতোই না — বিশেষ করে security-sensitive parsing কোডে (crash = potential DoS vulnerability) এটা industry standard practice। কোড কভারেজ একটা useful সিগন্যাল কিন্তু goal না — ১০০% কভারেজ মানেই বাগ-মুক্ত কোড না (assertion ছাড়া শুধু লাইন এক্সিকিউট হওয়া কিছু প্রমাণ করে না)।`,
+  alt:`কভারেজ নাম্বারকে KPI বানিয়ে "৯০% কভারেজ লাগবেই" জোর করাটা একটা কমন অ্যান্টি-প্যাটার্ন — এতে ডেভরা মিনিংলেস টেস্ট লেখে শুধু লাইন কভার করার জন্য। কভারেজ রিপোর্ট বরং ব্যবহার করা উচিত "কোন গুরুত্বপূর্ণ পাথ একদমই টেস্ট করা হয়নি" খুঁজে বের করতে।`,
+  note:`Fuzzing সাধারণত CI তে প্রতি কমিটে চালানো হয় না (অনেক সময় লাগে) — বরং একটা নিয়মিত (nightly/weekly) স্কেডিউলড জব হিসেবে চালানো হয়, অথবা বড় রিলিজের আগে কয়েক ঘন্টা/দিন ধরে "fuzzing campaign" চালানো হয়।`,
+  tags:["cargo-fuzz","fuzzing","code coverage","llvm-cov"]
+},
+/* ================= PART 6 — TOOLING & BUILD ================= */
+{
+  id:"6.1", part:"p6",
+  en:"rustfmt", bn:"rustfmt — কোড ফরম্যাটিং, বিতর্কহীন",
+  what:`<code>cargo fmt</code> পুরো কোডবেসকে একটা কনসিসটেন্ট স্টাইলে অটো-ফরম্যাট করে দেয় — ইনডেন্টেশন, লাইন ব্রেক, স্পেসিং, সব কিছু কনফিগারযোগ্য কিন্তু ডিফল্টই বেশিরভাগ টিম ব্যবহার করে।`,
+  where:`প্রতিটা Rust প্রোজেক্ট, প্রতিটা কমিটের আগে — এটা এতটাই স্ট্যান্ডার্ড যে বেশিরভাগ Rust ডেভেলপার এডিটরে "save করলেই fmt" সেট করে রাখে।`,
+  why:`টিমে কোড-স্টাইল নিয়ে বিতর্ক (tabs vs spaces, ব্র্যাকেট কোথায়) সম্পূর্ণ বাদ দিয়ে দেয় — rustfmt-ই একমাত্র "সঠিক" ফরম্যাট, আলোচনার সুযোগ নেই। PR review এ তাই ফরম্যাটিং নিয়ে সময় নষ্ট হয় না, লজিকের উপর ফোকাস করা যায়।`,
+  alt:`কাস্টম নিয়ম চাইলে <code>rustfmt.toml</code> দিয়ে কিছু সেটিংস (যেমন <code>max_width</code>, <code>imports_granularity</code>) পাল্টানো যায়, তবে অনেক advanced অপশন এখনও nightly-only — প্রোডাকশন টিম সাধারণত stable rustfmt এর ডিফল্টের কাছাকাছি থাকে যাতে কনসিসটেন্সি বজায় থাকে।`,
+  note:`CI তে <code>cargo fmt --check</code> রান করা (শুধু লোকালি fmt চালানো না) বাধ্যতামূলক করা উচিত — যাতে কেউ ভুলে un-formatted কোড মার্জ করতে না পারে।`,
+  tags:["rustfmt","code style","CI"]
+},
+{
+  id:"6.2", part:"p6",
+  en:"Clippy", bn:"clippy — লিন্টার যা বাগ ধরে",
+  what:`<code>cargo clippy</code> রাস্টের অফিশিয়াল লিন্টার — শুধু স্টাইল না, বরং কমন বাগ প্যাটার্ন, অদক্ষ কোড, এবং idiomatic-না-এমন কোড ধরে ফেলে ৭০০+ লিন্ট রুল দিয়ে। compiler warning এর চেয়ে অনেক গভীরে যায়।`,
+  where:`প্রতিটা প্রোজেক্ট, CI পাইপলাইনে বাধ্যতামূলক স্টেপ হিসেবে।`,
+  why:`একটা কমন উদাহরণ: <code>if x == true</code> লিখলে clippy সাজেস্ট করবে <code>if x</code>; <code>.clone()</code> যেখানে দরকার নেই সেটা ধরে দেবে; <code>match</code> যেটা <code>if let</code> এ সহজ হতো সেটা সাজেস্ট করবে। এগুলো ছোট মনে হলেও, প্রোডাকশন কোডবেসে জমতে জমতে readability আর performance দুটোতেই প্রভাব ফেলে। অনেক টিম <code>#![deny(clippy::all)]</code> বা নির্দিষ্ট lint group দিয়ে CI তে ব্লক করে রাখে।`,
+  alt:`Clippy এর কিছু লিন্ট (<code>pedantic</code>, <code>nursery</code> গ্রুপ) অতিরিক্ত কড়া এবং সবসময় সঠিক সাজেশন দেয় না — এগুলো ডিফল্টে অফ থাকে, ইচ্ছাকৃতভাবে এনাবল করতে হয়। পুরো টিম যদি নতুন Rust-এ হয়, শুরুতে শুধু ডিফল্ট লিন্ট দিয়েই যথেষ্ট, pedantic group ধীরে ধীরে যোগ করা ভালো।`,
+  note:`লিন্ট ফলস-পজিটিভ মনে হলে সরাসরি বাদ দেওয়ার (<code>#[allow(...)]</code>) আগে একবার ভাবা উচিত কেন clippy এটা flag করলো — বেশিরভাগ সময় clippy ঠিকই বলে, শুধু প্রথমে বোঝা যায় না কেন।`,
+  code:`// CI তে:
+cargo clippy --all-targets --all-features -- -D warnings`,
+  tags:["clippy","linting","CI"]
+},
+{
+  id:"6.3", part:"p6",
+  en:"rust-analyzer & IDE", bn:"rust-analyzer — প্রোডাক্টিভিটির মেরুদণ্ড",
+  what:`<code>rust-analyzer</code> হলো Rust এর অফিশিয়াল Language Server Protocol (LSP) ইমপ্লিমেন্টেশন — VS Code, Neovim, JetBrains সব এডিটরে রিয়েল-টাইম টাইপ এরর, অটো-কমপ্লিট, গো-টু-ডেফিনিশন, ইনলাইন টাইপ হিন্ট দেয়।`,
+  where:`প্রতিদিনের ডেভেলপমেন্ট এনভায়রনমেন্ট — এটা প্রায় mandatory, rust-analyzer ছাড়া বড় কোডবেসে কাজ করা কঠিন (বিশেষ করে ট্রেইট/জেনেরিক-হেভি কোডে টাইপ বোঝা সহজ হয় না চোখে)।`,
+  why:`Rust এর টাইপ ইনফারেন্স শক্তিশালী কিন্তু মাঝে মাঝে অস্পষ্ট (একটা <code>.into_iter().collect()</code> এর রেজাল্ট টাইপ কী?) — rust-analyzer ইনলাইন হিন্ট দিয়ে সেটা দেখিয়ে দেয় কোড না চালিয়েই। এটা "borrow checker error" গুলোও এডিটরেই দেখিয়ে দেয়, কম্পাইল করার আগেই।`,
+  alt:`পুরনো <code>RLS</code> (Rust Language Server) এখন deprecated, rust-analyzer পুরোপুরি রিপ্লেস করেছে। এটা নিয়ে এখন কোনো বিতর্কই নেই — সব official documentation, VS Code extension এখন rust-analyzer ভিত্তিক।`,
+  note:`নিম্ন-স্পেক মেশিনে (কম RAM) বড় কোডবেসে rust-analyzer কিছুটা ভারী মনে হতে পারে — <code>rust-analyzer.cachePriming.enable</code> এবং workspace-নির্দিষ্ট সেটিংস দিয়ে টিউন করা যায়, বা প্রয়োজনে শুধু নির্দিষ্ট crate workspace member হিসেবে ওপেন রাখা যায় যাতে পুরো মনোরেপো ইনডেক্স না করতে হয়।`,
+  tags:["rust-analyzer","IDE","LSP"]
+},
+{
+  id:"6.4", part:"p6",
+  en:"cargo-audit & cargo-deny", bn:"সিকিউরিটি ও লাইসেন্স অডিট",
+  what:`<code>cargo-audit</code> RustSec Advisory Database এর বিপরীতে প্রোজেক্টের ডিপেন্ডেন্সি ট্রি চেক করে জানা vulnerability খুঁজে বের করে। <code>cargo-deny</code> আরো ব্যাপক — vulnerability, license compliance (কোনো GPL ডিপেন্ডেন্সি ভুলে ঢুকে গেছে কিনা), duplicate dependency version, banned crate — সব একসাথে চেক করে।`,
+  where:`CI পাইপলাইনে বাধ্যতামূলক স্টেপ, বিশেষ করে যেকোনো প্রোডাকশন/কমার্শিয়াল প্রোজেক্টে।`,
+  why:`Rust এর ডিপেন্ডেন্সি ইকোসিস্টেম (crates.io) ওপেন — যেকেউ প্যাকেজ পাবলিশ করতে পারে, আর transitive dependency (তোমার ডিপেন্ডেন্সির ডিপেন্ডেন্সি) নিয়ন্ত্রণে থাকে না। একটা পরিচিত ক্রেটে vulnerability পাওয়া গেলে <code>cargo-audit</code> সেটা তোমার প্রোজেক্টে ব্যবহার হচ্ছে কিনা তৎক্ষণাৎ জানিয়ে দেয় — না জানলে সেই vulnerability প্রোডাকশনে থেকেই যাবে।`,
+  alt:`GitHub এর নিজস্ব Dependabot ও একই কাজ করে (automated PR দিয়ে vulnerable dependency আপডেট করে) — cargo-audit/cargo-deny CI-লেভেল hard gate হিসেবে, Dependabot প্যাসিভ মনিটরিং হিসেবে — দুটো একসাথে ব্যবহার করাই best practice, একটা অন্যটার বিকল্প না।`,
+  note:`লাইসেন্স কমপ্লায়েন্স ভুলে যাওয়া কমন — একটা টিম হয়তো MIT/Apache লাইসেন্সড কোড শিপ করছে ভেবে, কিন্তু একটা transitive dependency GPL হলে legal সমস্যা হতে পারে। <code>cargo-deny check licenses</code> এই ধরনের সারপ্রাইজ আগেভাগে ধরে ফেলে।`,
+  code:`# CI step
+cargo install cargo-audit cargo-deny
+cargo audit
+cargo deny check`,
+  tags:["cargo-audit","cargo-deny","security","RustSec"]
+},
+{
+  id:"6.5", part:"p6",
+  en:"cargo-outdated & cargo-udeps", bn:"ডিপেন্ডেন্সি হাইজিন",
+  what:`<code>cargo-outdated</code> দেখায় কোন ডিপেন্ডেন্সির নতুন ভার্সন আছে (Cargo.toml এর semver constraint অনুযায়ী আপডেট করা যায় কিনা)। <code>cargo-udeps</code> খুঁজে বের করে Cargo.toml এ লিস্টেড কিন্তু কোথাও ব্যবহার হয় না এমন ডিপেন্ডেন্সি (unused dependencies)।`,
+  where:`পিরিয়ডিক মেইনটেনেন্স (মাসিক/স্প্রিন্ট-ভিত্তিক ডিপেন্ডেন্সি রিভিউ), বড় রিফ্যাক্টরের পরে।`,
+  why:`পুরনো ডিপেন্ডেন্সি জমতে থাকলে নিরাপত্তা ঝুঁকি বাড়ে (পুরনো ভার্সনে ফিক্স-করা bug থেকে যায়) এবং বড় আপডেট (major version bump) আরো কঠিন হয়ে যায় সময়ের সাথে সাথে gap বাড়ার কারণে। Unused dependency অকারণে কম্পাইল টাইম বাড়ায় আর সিকিউরিটি সার্ফেস (audit করার জিনিস) বাড়ায় — কোনো উপকার ছাড়াই।`,
+  alt:`Renovate bot (Dependabot এর মতোই) স্বয়ংক্রিয়ভাবে নিয়মিত ডিপেন্ডেন্সি আপডেট PR বানাতে পারে — ম্যানুয়ালি cargo-outdated চালানোর চেয়ে বড় টিমে বেশি স্কেলেবল, তবে ছোট প্রোজেক্টে ম্যানুয়াল চেক-ইনও যথেষ্ট।`,
+  note:`মেজর ভার্সন bump (যেমন tokio 1.x থেকে হাইপোথেটিক্যাল 2.x) কখনোই ব্লাইন্ডলি করা উচিত না — changelog পড়ে breaking change বুঝে, স্টেজিং এনভায়রনমেন্টে টেস্ট করে তারপর প্রোডাকশনে।`,
+  tags:["cargo-outdated","cargo-udeps","dependency management"]
+},
+{
+  id:"6.6", part:"p6",
+  en:"Build Speed — sccache, mold, cargo check", bn:"বিল্ড স্পিড অপ্টিমাইজেশন",
+  what:`Rust এর কম্পাইল টাইম একটা পরিচিত ব্যথার জায়গা, বিশেষ করে বড় কোডবেস বা কম-স্পেক মেশিনে। তিনটা প্র্যাক্টিক্যাল সমাধান — <code>sccache</code> (compilation cache, একই কোড দুবার কম্পাইল না করা), <code>mold</code>/<code>lld</code> (স্ট্যান্ডার্ড লিংকারের চেয়ে অনেক ফাস্টার লিংকার), আর ডেভ-লুপে <code>cargo build</code> এর বদলে <code>cargo check</code> (শুধু টাইপ-চেক করে, কোডজেন স্কিপ করে, অনেক ফাস্টার)।`,
+  where:`প্রতিদিনের ডেভেলপমেন্ট লুপ, বিশেষ করে কম RAM/পুরনো CPU-র মেশিনে (i5 এর মতো প্রসেসরে বড় async-heavy প্রোজেক্টে কম্পাইল টাইম চোখে পড়ার মতো হতে পারে), CI পাইপলাইন।`,
+  why:`প্রতিবার সেভ করে পুরো <code>cargo build</code> চালানো — বিশেষ করে axum/tokio এর মতো heavy ডিপেন্ডেন্সি ট্রি থাকা প্রোজেক্টে — অনেক সময় নেয়। <code>cargo check</code> দিয়ে দ্রুত "কোড কম্পাইল হবে কিনা" যাচাই করে, শুধু আসল রান/টেস্ট করার সময় পুরো <code>build</code> চালানো — এই অভ্যাসেই দিনে অনেকটা সময় বাঁচে। CI তে sccache ব্যবহার করলে (S3/local cache ব্যাকএন্ড সহ) রিপিটেড বিল্ড অনেক ফাস্ট হয়ে যায় কারণ আগের বিল্ডের artifact রিইউজ হয়।`,
+  alt:`<code>cranelift</code> কোডজেন ব্যাকএন্ড (LLVM এর বিকল্প, ডেভ বিল্ডের জন্য ফাস্টার কিন্তু কম অপ্টিমাইজড আউটপুট) নাইটলিতে এক্সপেরিমেন্টাল হিসেবে আছে — শুধু লোকাল ডেভ লুপে, প্রোডাকশন বিল্ডে কখনো না।`,
+  note:`কম-স্পেক মেশিনে (যেমন কম RAM) workspace কে একাধিক ছোট crate এ ভাগ করাটাও বিল্ড টাইম কমানোর একটা আন্ডাররেটেড কৌশল — cargo শুধু যেই crate পাল্টেছে সেটাই রি-কম্পাইল করে, পুরো মনোলিথ না।`,
+  code:`# ~/.cargo/config.toml
+[build]
+rustc-wrapper = "sccache"
+[target.x86_64-unknown-linux-gnu]
+linker = "clang"
+rustflags = ["-C", "link-arg=-fuse-ld=mold"]`,
+  tags:["sccache","mold","lld","cargo check","build speed"]
+},
+/* ================= PART 7 — PERFORMANCE ================= */
+{
+  id:"7.1", part:"p7",
+  en:"Release Profile Tuning", bn:"রিলিজ প্রোফাইল — lto, codegen-units, panic",
+  what:`Cargo.toml এ <code>[profile.release]</code> সেকশনে কিছু ফ্ল্যাগ দিয়ে ফাইনাল বাইনারির পারফরম্যান্স ও সাইজ টিউন করা যায় — <code>lto</code> (Link-Time Optimization, ক্রস-ক্রেট ইনলাইনিং), <code>codegen-units</code> (কম মানে বেশি অপ্টিমাইজেশন কিন্তু ধীর কম্পাইল), <code>panic = "abort"</code> (unwinding কোড বাদ দিয়ে বাইনারি ছোট করা), <code>strip</code> (debug symbol বাদ দেওয়া)।`,
+  where:`প্রোডাকশন বাইনারি বিল্ড করার সময় — ডেভ বিল্ডে এসব দরকার নেই (কম্পাইল স্পিড priority থাকে)।`,
+  why:`ডিফল্ট রিলিজ প্রোফাইলই decent, কিন্তু <code>lto = "fat"</code> + <code>codegen-units = 1</code> দিয়ে আরেকটু পারফরম্যান্স চেপে বের করা যায় (কম্পাইল টাইমের বিনিময়ে — অনেক বেশি সময় লাগতে পারে বড় প্রোজেক্টে, তাই শুধু ফাইনাল রিলিজ বিল্ডে, প্রতি CI রানে না)। <code>panic = "abort"</code> বাইনারি সাইজ কমায় এবং সামান্য পারফরম্যান্স বাড়ায়, কিন্তু <code>catch_unwind</code> ব্যবহার করা যাবে না (যেমন কিছু web framework রিকোয়েস্ট হ্যান্ডলারে panic ক্যাচ করে 500 রিটার্ন করে) — এই ট্রেড-অফ বুঝে নেওয়া উচিত।`,
+  alt:`Container/serverless ডিপ্লয়মেন্টে বাইনারি সাইজ ম্যাটার করে (ইমেজ পুল টাইম, cold start) — সেখানে <code>opt-level = "z"</code> (সাইজ অপ্টিমাইজেশন, স্পিডের বিনিময়ে) বিবেচনা করা যায়, যদিও বেশিরভাগ সার্ভিসে <code>opt-level = 3</code> (ডিফল্ট, স্পিড-অপ্টিমাইজড) ঠিক আছে।`,
+  note:`<code>lto = true</code> পুরো ডিপেন্ডেন্সি ট্রি জুড়ে অপ্টিমাইজ করে বলে বড় প্রোজেক্টে রিলিজ বিল্ড ৫-১০ গুণ পর্যন্ত ধীর হতে পারে ডেভ বিল্ডের তুলনায় — CI তে এটার জন্য আলাদা, ধীরগতির "release build" স্টেজ রাখা এবং cache করা ভালো অভ্যাস।`,
+  code:`[profile.release]
+lto = "fat"
+codegen-units = 1
+panic = "abort"      # unwinding সাপোর্ট দরকার না থাকলে
+strip = true          # debug symbol বাদ, বাইনারি ছোট`,
+  tags:["release profile","LTO","codegen-units","panic=abort"]
+},
+{
+  id:"7.2", part:"p7",
+  en:"Profiling — perf & flamegraph", bn:"প্রোফাইলিং — অনুমান না করে দেখা",
+  what:`<code>perf</code> (Linux) দিয়ে একটা রানিং প্রোগ্রামের CPU টাইম কোথায় যাচ্ছে তা স্যাম্পল করা যায়, আর <code>cargo-flamegraph</code> সেই ডেটা থেকে একটা ভিজুয়াল "ফ্লেমগ্রাফ" বানায় — কোন ফাংশন কতটা সময় খাচ্ছে তা এক নজরে দেখা যায়।`,
+  where:`পারফরম্যান্স অপ্টিমাইজেশনের আগে, "কোথায় আসল বটলনেক" খুঁজে বের করার সময়।`,
+  why:`ডেভেলপাররা প্রায়ই অনুমান করে অপ্টিমাইজ করে ("এই লুপটা নিশ্চয়ই স্লো") — বাস্তবে বেশিরভাগ সময় বটলনেক অন্য কোথাও থাকে (I/O wait, lock contention, অপ্রত্যাশিত allocation)। প্রোফাইলার ছাড়া অপ্টিমাইজেশন প্রায়ই সময় নষ্ট করে এমন জায়গায় যা আসলে ম্যাটারই করে না ("Premature optimization is the root of all evil" — Donald Knuth এর বিখ্যাত উক্তি, Rust কমিউনিটিতেও সমান প্রযোজ্য)।`,
+  alt:`<code>samply</code> একটা নতুন, ব্যবহার-সহজ প্রোফাইলার (Firefox Profiler UI ব্যবহার করে, perf এর চেয়ে সহজ সেটআপ) — ক্রস-প্ল্যাটফর্ম, ম্যাক/লিনাক্স/উইন্ডোজেই কাজ করে, নতুনদের জন্য ভালো শুরুর পয়েন্ট।`,
+  note:`প্রোফাইলিং সবসময় রিলিজ বিল্ডে করা উচিত (<code>debug = true</code> দিয়ে সিম্বল রেখে) — ডেভ বিল্ডে (unoptimized) প্রোফাইল করলে রেজাল্ট ভুল ছবি দেখাবে, কারণ ডেভ বিল্ডে কোড আলাদাভাবে অপ্টিমাইজড থাকে।`,
+  tags:["perf","flamegraph","profiling","samply"]
+},
+{
+  id:"7.3", part:"p7",
+  en:"Alternative Allocators", bn:"jemalloc / mimalloc — কাস্টম মেমরি অ্যালোকেটর",
+  what:`Rust এর ডিফল্ট গ্লোবাল অ্যালোকেটর (সিস্টেম অ্যালোকেটর — Linux এ glibc malloc) সব ওয়ার্কলোডের জন্য অপ্টিমাল না — বিশেষ করে multi-threaded, allocation-heavy ওয়ার্কলোডে। <code>jemalloc</code> (Facebook-এর) বা <code>mimalloc</code> (Microsoft-এর) এসব কেসে বেটার পারফরম্যান্স দেয়।`,
+  where:`হাই-থ্রুপুট সার্ভার যেখানে প্রতি সেকেন্ডে অনেক অ্যালোকেশন/ডিঅ্যালোকেশন হয় (যেমন প্রতি রিকোয়েস্টে নতুন struct, Vec, String বানানো)।`,
+  why:`মাল্টি-থ্রেডেড অ্যাপ্লিকেশনে ডিফল্ট অ্যালোকেটরে থ্রেডের মধ্যে "lock contention" হতে পারে অ্যালোকেশনের সময়ই — jemalloc/mimalloc thread-local অ্যারেনা ব্যবহার করে এই কনটেনশন অনেকটাই কমায়। প্রোডাকশন বেঞ্চমার্কে অনেক সময় ১০-৩০% থ্রুপুট ইম্প্রুভমেন্ট দেখা যায় শুধু অ্যালোকেটর সুইচ করে, কোনো কোড পরিবর্তন ছাড়াই।`,
+  alt:`একটা সিম্পল CRUD API, কম ট্রাফিক, বা CLI টুলে অ্যালোকেটর সুইচ করার কোনো লাভ নেই — এটা একটা "শেষ ধাপের" অপ্টিমাইজেশন, প্রোফাইলিং দিয়ে allocation-heavy বটলনেক কনফার্ম হওয়ার পরই বিবেচনা করা উচিত।`,
+  note:`সুইচ করা এক লাইনের ব্যাপার (<code># [global_allocator]</code>), কিন্তু প্রোডাকশনে চালানোর আগে অবশ্যই নিজের ওয়ার্কলোডে বেঞ্চমার্ক করে দেখা উচিত — সব ওয়ার্কলোডে jemalloc/mimalloc জেতে না, কখনো কখনো সিস্টেম অ্যালোকেটরই ভালো।`,
+  code:`// Cargo.toml: tikv-jemallocator = "0.5"
+#[global_allocator]
+static GLOBAL: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;`,
+  tags:["jemalloc","mimalloc","allocator","performance"]
+},
+/* ================= PART 8 — OBSERVABILITY & CONFIG ================= */
+{
+  id:"8.1", part:"p8",
+  en:"tracing vs log", bn:"tracing — প্রোডাকশন লগিং এর স্ট্যান্ডার্ড",
+  what:`<code>log</code> ক্রেট সিম্পল, লেভেল-বেসড লগিং দেয় (<code>info!</code>, <code>warn!</code>, <code>error!</code>) — ফ্ল্যাট, একটা মেসেজ একটা লাইন। <code>tracing</code> এর চেয়ে অনেক বেশি — এটা "structured, contextual, span-based" — একটা রিকোয়েস্টের পুরো লাইফসাইকেল (span) জুড়ে কনটেক্সট ক্যারি করে, async কোডেও ঠিকমতো কাজ করে (যেটা log এর সবচেয়ে বড় সীমাবদ্ধতা)।`,
+  where:`যেকোনো প্রোডাকশন সার্ভিস, বিশেষ করে async/tokio-ভিত্তিক — প্রতিটা ইনকামিং রিকোয়েস্ট একটা span, তার ভেতরের সব লগ অটোমেটিক্যালি সেই span এর কনটেক্সট (request_id, user_id ইত্যাদি) বহন করে।`,
+  why:`Async কোডে <code>log</code> ব্যবহার করলে একটা বড় সমস্যা হয় — একই থ্রেডে অনেক টাস্ক ইন্টারলিভড ভাবে চলে, তাই "কোন লগ লাইনটা কোন রিকোয়েস্টের" বোঝা কঠিন হয়ে যায় শুধু প্লেইন টেক্সট লগ দেখে। <code>tracing</code> এর span প্রতিটা async টাস্কের সাথে কনটেক্সট আটকে রাখে, এমনকি টাস্ক সুইচ হলেও — প্রোডাকশন ডিবাগিং এ এটা রাতদিনের পার্থক্য তৈরি করে। এছাড়া tracing structured (key-value) লগ দেয় যেটা সরাসরি JSON এ এক্সপোর্ট করে log aggregator (Loki, Elasticsearch) এ পাঠানো যায়, প্লেইন টেক্সট পার্স করার দরকার হয় না।`,
+  alt:`ছোট, সিম্পল CLI টুলে <code>log</code> + <code>env_logger</code> যথেষ্ট এবং সিম্পলার — সব জায়গায় tracing এর ভারী মেশিনারি দরকার নেই। কিন্তু কোনো async নেটওয়ার্ক সার্ভিসে <code>log</code> ব্যবহার করা এখন প্রায় "legacy" চয়েস হিসেবে ধরা হয়।`,
+  note:`<code>tracing-subscriber</code> এর <code>EnvFilter</code> দিয়ে রানটাইমে (কোড পাল্টানো ছাড়াই) লগ লেভেল কন্ট্রোল করা যায় (<code>RUST_LOG=my_crate=debug,tower_http=info</code>) — প্রোডাকশন ইনসিডেন্টের সময় রিডিপ্লয় ছাড়াই debug লগ চালু করা যায়।`,
+  code:`#[tracing::instrument]           // পুরো ফাংশন একটা span
+async fn handle_request(id: u64) {
+    tracing::info!(user_id = id, "রিকোয়েস্ট প্রসেসিং শুরু");
+    // এই span এর ভেতরের সব লগে user_id অটো অ্যাটাচড থাকবে
+}`,
+  tags:["tracing","log","structured logging","span"]
+},
+{
+  id:"8.2", part:"p8",
+  en:"Metrics & OpenTelemetry", bn:"মেট্রিক্স ও OpenTelemetry ইন্টিগ্রেশন",
+  what:`লগ বলে "কী হয়েছিল", মেট্রিক্স বলে "কেমন চলছে" সংখ্যায় (রিকোয়েস্ট/সেকেন্ড, লেটেন্সি পার্সেন্টাইল, এরর রেট)। <code>metrics</code> ক্রেট + Prometheus exporter দিয়ে এই সংখ্যাগুলো এক্সপোজ করা হয়, আর <code>OpenTelemetry</code> (OTel) একটা ভেন্ডর-অ্যাগনস্টিক স্ট্যান্ডার্ড — trace, metrics, logs — সব একটা কমন ফরম্যাটে পাঠানোর জন্য।`,
+  where:`প্রোডাকশন সার্ভিস মনিটরিং ড্যাশবোর্ড (Grafana), অ্যালার্টিং সিস্টেম, distributed tracing (মাইক্রোসার্ভিস আর্কিটেকচারে একটা রিকোয়েস্ট কোন কোন সার্ভিসের মধ্য দিয়ে গেলো তা ট্র্যাক করা)।`,
+  why:`লগ থেকে "গত ৫ মিনিটে p99 লেটেন্সি কত ছিল" বের করা কার্যত অসম্ভব (millions of log lines parse করতে হবে) — মেট্রিক্স এর জন্যই ডিজাইন করা, রিয়েল-টাইম অ্যাগ্রিগেশন দেয়। মাইক্রোসার্ভিস আর্কিটেকচারে distributed tracing (OTel দিয়ে) ছাড়া "কোন সার্ভিসে রিকোয়েস্ট স্লো হয়ে গেলো" বের করা প্রায় গোয়েন্দাগিরির মতো কঠিন হয়ে যায়।`,
+  alt:`ছোট, সিঙ্গেল-সার্ভিস প্রোজেক্টে শুরুতে শুধু কয়েকটা বেসিক Prometheus মেট্রিক্স (রিকোয়েস্ট কাউন্ট, লেটেন্সি হিস্টোগ্রাম) যথেষ্ট — পুরো OTel পাইপলাইন সেটআপ করা প্রি-ম্যাচিউর অপ্টিমাইজেশন হতে পারে যদি এখনো মাত্র একটাই সার্ভিস থাকে।`,
+  note:`<code>tracing</code> আর OpenTelemetry একসাথে ভালো কাজ করে — <code>tracing-opentelemetry</code> ক্রেট দিয়ে tracing এর span গুলোই OTel trace এ এক্সপোর্ট করা যায়, দুইবার ইনস্ট্রুমেন্ট করার দরকার হয় না।`,
+  tags:["metrics","Prometheus","OpenTelemetry","observability"]
+},
+{
+  id:"8.3", part:"p8",
+  en:"config & dotenvy", bn:"কনফিগারেশন ম্যানেজমেন্ট",
+  what:`<code>config</code> ক্রেট একাধিক সোর্স (ফাইল, environment variable, কমান্ড-লাইন আর্গুমেন্ট) থেকে কনফিগারেশন মার্জ করে একটা টাইপ-সেফ struct এ ডিসিরিয়ালাইজ করে দেয় (serde এর সাথে ইন্টিগ্রেটেড)। <code>dotenvy</code> লোকাল ডেভেলপমেন্টে <code>.env</code> ফাইল থেকে environment variable লোড করে।`,
+  where:`প্রতিটা প্রোডাকশন সার্ভিস — ডাটাবেজ URL, API key, পোর্ট নাম্বার, ফিচার ফ্ল্যাগ — এসব হার্ডকোড না করে কনফিগারযোগ্য রাখতে হয়।`,
+  why:`"twelve-factor app" নীতি অনুযায়ী কনফিগ কোড থেকে আলাদা থাকা উচিত (একই বাইনারি dev/staging/production এ ভিন্ন কনফিগ দিয়ে চলতে পারা উচিত, রিবিল্ড ছাড়াই)। <code>config</code> ক্রেট দিয়ে "environment variable কনফিগ ফাইলকে override করবে" এই layered priority সহজে সেটআপ করা যায় — লোকালি ফাইল দিয়ে টেস্ট, প্রোডাকশনে env var দিয়ে override (secrets এর জন্য বিশেষভাবে গুরুত্বপূর্ণ, নিচের টপিক দেখো)।`,
+  alt:`ছোট প্রোজেক্টে সরাসরি <code>std::env::var()</code> কল করাই যথেষ্ট হতে পারে — কিন্তু কনফিগ অপশন বাড়তে থাকলে (১০+) সেটা দ্রুত messy হয়ে যায়, তখন <code>config</code> ক্রেটের structured অ্যাপ্রোচ বেটার মেইনটেইনেবিলিটি দেয়।`,
+  note:`<code>.env</code> ফাইল কখনো git এ কমিট করবে না — <code>.gitignore</code> এ যোগ করে, বরং <code>.env.example</code> (আসল ভ্যালু ছাড়া শুধু কী গুলোর নাম) কমিট করে টিমকে জানানো উচিত কী কী env var দরকার।`,
+  code:`#[derive(serde::Deserialize)]
+struct Settings { port: u16, database_url: String }
+
+let settings: Settings = config::Config::builder()
+    .add_source(config::File::with_name("config"))
+    .add_source(config::Environment::default())  // env var override করবে
+    .build()?.try_deserialize()?;`,
+  tags:["config","dotenvy","environment variables","twelve-factor"]
+},
+{
+  id:"8.4", part:"p8",
+  en:"Secrets Management", bn:"সিক্রেটস — কখনো হার্ডকোড না, কখনো git এ না",
+  what:`API key, ডাটাবেজ পাসওয়ার্ড, JWT সাইনিং কী — এই ধরনের স্পর্শকাতর ভ্যালু কোডে হার্ডকোড করা বা git এ কমিট করা একটা মৌলিক সিকিউরিটি ভুল। প্রোডাকশনে এগুলো environment variable, বা ডেডিকেটেড secret manager (HashiCorp Vault, AWS Secrets Manager, cloud provider-এর নিজস্ব সিস্টেম) থেকে রানটাইমে লোড করা উচিত।`,
+  where:`প্রতিটা প্রোডাকশন ডিপ্লয়মেন্ট — API credential, ডাটাবেজ কানেকশন স্ট্রিং, এনক্রিপশন কী।`,
+  why:`একবার কোনো সিক্রেট git হিস্ট্রিতে কমিট হয়ে গেলে, শুধু সেই ফাইল ডিলিট করলেই যথেষ্ট না — পুরো git history থেকে মুছতে হয় (rewrite history), আর সেই সিক্রেট ততক্ষণে compromised ধরে নিয়ে rotate (নতুন কী জেনারেট) করাই একমাত্র নিরাপদ পথ। এই ঝামেলা এড়ানোর একমাত্র উপায় — শুরু থেকেই সিক্রেট কোনোভাবেই সোর্স কোডে না রাখা।`,
+  alt:`ছোট প্রোজেক্ট/সাইড প্রোজেক্টে শুধু environment variable (ডিপ্লয়মেন্ট প্ল্যাটফর্মের সিক্রেট ম্যানেজমেন্ট ব্যবহার করে — যেমন cloud provider এর dashboard) যথেষ্ট। বড়, মাল্টি-সার্ভিস অর্গানাইজেশনে ডেডিকেটেড Vault-এর মতো সিস্টেম প্রয়োজন হয় — access control, audit log, automatic rotation এর জন্য।`,
+  note:`<code>secrecy</code> ক্রেট Rust এ একটা ছোট কিন্তু কার্যকরী টুল — সিক্রেট ভ্যালুকে একটা wrapper টাইপে রাখে যেটা <code>Debug</code>/<code>Display</code> এ অটোমেটিক্যালি রিড্যাক্ট হয়ে যায় (ভুলে লগে সিক্রেট প্রিন্ট হয়ে যাওয়ার মতো কমন ভুল আটকায়)।`,
+  tags:["secrets","Vault","secrecy crate","security"]
+},
+/* ================= PART 9 — DEPLOYMENT & ARCHITECTURE ================= */
+{
+  id:"9.1", part:"p9",
+  en:"Docker Multi-Stage + musl", bn:"ছোট, স্ট্যাটিক Docker ইমেজ বানানো",
+  what:`Multi-stage Docker build মানে একটা স্টেজে কম্পাইল করা (ভারী বিল্ড টুলচেইন সহ), তারপর শুধু ফাইনাল বাইনারিটা একটা মিনিমাল রানটাইম ইমেজে কপি করা — ফলাফল ইমেজ অনেক ছোট হয়। <code>musl</code> টার্গেট (<code>x86_64-unknown-linux-musl</code>) দিয়ে সম্পূর্ণ স্ট্যাটিকালি-লিংকড বাইনারি বানানো যায় যা <code>scratch</code> বা <code>distroless</code> ইমেজেও চলে (কোনো OS লাইব্রেরির উপর নির্ভর না করে)।`,
+  where:`প্রোডাকশন কনটেইনার ডিপ্লয়মেন্ট (Kubernetes, ECS, Cloud Run) — যেকোনো Rust সার্ভিস যা কনটেইনারাইজড হয়ে চলবে।`,
+  why:`একটা সাধারণ ভুল হলো শুধু <code>rust:latest</code> ইমেজ থেকে সরাসরি রান করা — এতে পুরো Rust টুলচেইন (কম্পাইলার, cargo, সোর্স কোড) ফাইনাল ইমেজে থেকে যায়, যা কয়েকশ MB থেকে কয়েক GB পর্যন্ত হতে পারে। Multi-stage + musl দিয়ে একটা টিপিক্যাল ওয়েব সার্ভিস ইমেজ ১০-২০MB এ নামিয়ে আনা যায় — দ্রুত পুল, দ্রুত ডিপ্লয়, ছোট অ্যাটাক সার্ফেস (কম প্যাকেজ মানে কম vulnerability)।`,
+  alt:`glibc টার্গেট + <code>distroless</code> বেস ইমেজ (কোনো shell, প্যাকেজ ম্যানেজার ছাড়া, শুধু বাইনারি চালানোর জন্য দরকারি মিনিমাম) — musl এর কিছু edge-case কম্প্যাটিবিলিটি ইস্যু (বিশেষ করে DNS resolution, কিছু C লাইব্রেরি-নির্ভর ক্রেট) এড়াতে চাইলে এটা একটা ভালো বিকল্প, কিছুটা বড় ইমেজের বিনিময়ে।`,
+  note:`musl বিল্ডে কখনো কখনো পারফরম্যান্স সামান্য কমতে পারে glibc এর তুলনায় (musl এর মেমরি অ্যালোকেটর কম অপ্টিমাইজড) — হাই-থ্রুপুট সার্ভিসে এটা প্রোফাইল করে দেখা উচিত, প্রয়োজনে jemalloc/mimalloc দিয়ে এই পার্থক্য পুষিয়ে দেওয়া যায়।`,
+  code:`FROM rust:1-slim AS builder
+WORKDIR /app
+COPY . .
+RUN rustup target add x86_64-unknown-linux-musl && \\
+    cargo build --release --target x86_64-unknown-linux-musl
+
+FROM scratch
+COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/myapp /myapp
+ENTRYPOINT ["/myapp"]`,
+  tags:["Docker","musl","multi-stage build","distroless"]
+},
+{
+  id:"9.2", part:"p9",
+  en:"CI/CD Pipeline", bn:"CI/CD — একটা কমপ্লিট পাইপলাইন",
+  what:`একটা প্রোডাকশন-গ্রেড Rust CI পাইপলাইনে সাধারণত থাকে (ধারাবাহিকভাবে) — <code>cargo fmt --check</code> → <code>cargo clippy -- -D warnings</code> → <code>cargo test</code> → <code>cargo audit</code> → বিল্ড → (staging এ) ডিপ্লয়। প্রতিটা স্টেপ ফেইল করলে পরেরটা চলে না, PR মার্জ ব্লক হয়ে যায়।`,
+  where:`GitHub Actions, GitLab CI, বা যেকোনো CI প্ল্যাটফর্ম — প্রতিটা প্রোডাকশন Rust প্রোজেক্টে।`,
+  why:`এই চেকগুলো ম্যানুয়ালি "মনে করে" চালানোর উপর নির্ভর করলে মানুষ ভুলে যায় — CI তে বাধ্যতামূলক করলে কোনো ব্রেকিং/আনফরম্যাটেড/ভালনারেবল কোড মেইন ব্র্যাঞ্চে পৌঁছাতেই পারে না। এটা একটা "quality gate" — টিম বড় হওয়ার সাথে সাথে এই স্বয়ংক্রিয় গার্ডরেইলগুলোর গুরুত্ব exponentially বাড়ে।`,
+  alt:`কিছু টিম CI তে <code>cargo test</code> এর সাথে fuzzing/property test আলাদা, ধীরগতির (nightly) জব হিসেবে রাখে যাতে প্রতিটা PR তে দেরি না হয় — এটা একটা ভালো ব্যালেন্স দ্রুত ফিডব্যাক (প্রতি PR) আর গভীর টেস্টিং (নিয়মিত schedule) এর মধ্যে।`,
+  note:`Rust কম্পাইল টাইম CI এর জন্য একটা বাস্তব খরচ — <code>Swatinem/rust-cache</code> (GitHub Actions) এর মতো cache action ব্যবহার করে dependency আবার আবার কম্পাইল করা এড়ানো যায়, CI রান টাইম অনেকটাই কমে।`,
+  code:`# .github/workflows/ci.yml (সংক্ষিপ্ত)
+- run: cargo fmt --all -- --check
+- run: cargo clippy --all-targets -- -D warnings
+- run: cargo test --all-features
+- run: cargo audit`,
+  tags:["CI/CD","GitHub Actions","quality gate"]
+},
+{
+  id:"9.3", part:"p9",
+  en:"Cargo Workspaces at Scale", bn:"বড় প্রোজেক্টে Workspace অর্গানাইজেশন",
+  what:`একটা Cargo workspace একাধিক related crate কে একসাথে ম্যানেজ করে (একটাই <code>Cargo.lock</code>, শেয়ার্ড ডিপেন্ডেন্সি ভার্সন, একসাথে বিল্ড) — মনোরেপো-স্টাইল প্রোজেক্ট অর্গানাইজেশনের ভিত্তি।`,
+  where:`মাঝারি থেকে বড় প্রোজেক্ট যেখানে লজিক্যালি আলাদা কম্পোনেন্ট আছে — যেমন <code>core</code> (ডোমেইন লজিক), <code>api</code> (HTTP লেয়ার), <code>cli</code> (কমান্ড-লাইন টুল), <code>migrations</code> — সব একই workspace এ আলাদা crate হিসেবে।`,
+  why:`একটাই বিশাল crate এ সবকিছু রাখলে দুইটা সমস্যা হয় — কম্পাইল টাইম (যেকোনো ছোট পরিবর্তনেও পুরো crate রি-কম্পাইল হয়) আর মডিউল বাউন্ডারি অস্পষ্ট হয়ে যায় (সবাই সবকিছুতে অ্যাক্সেস পায়, encapsulation ভেঙে যায়)। Workspace এ ভাগ করলে cargo শুধু পাল্টানো crate-ই রি-কম্পাইল করে (অন্য crate গুলোর কম্পাইল আর্টিফ্যাক্ট cache থেকে যায়), আর crate boundary নিজেই একটা architectural enforcement হয়ে যায় (core crate থেকে api crate কে dependency হিসেবে নেওয়া যায় না, শুধু উল্টোটা — এটা compile-time এ enforce হয়)।`,
+  alt:`ছোট প্রোজেক্টে (একটাই বাইনারি, স্পষ্ট বাউন্ডারি ছাড়া) workspace এর ওভারহেড নেওয়ার দরকার নেই — শুধু <code>mod</code> দিয়ে ফাইল/ফোল্ডার আলাদা করাই যথেষ্ট। Workspace তখনই মানে রাখে যখন সত্যিই একাধিক স্বতন্ত্র বিল্ড-ইউনিট (আলাদা বাইনারি, বা আলাদাভাবে পাবলিশ করা লাইব্রেরি) দরকার হয়।`,
+  note:`Workspace এ <code>[workspace.dependencies]</code> ব্যবহার করে একবার ভার্সন ডিফাইন করে সব member crate এ শেয়ার করা যায় — প্রতিটা crate এ আলাদা ভার্সন লিখলে ভার্সন মিসম্যাচ হওয়ার ঝুঁকি থাকে।`,
+  code:`# root Cargo.toml
+[workspace]
+members = ["core", "api", "cli"]
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+# member Cargo.toml তে:
+# serde = { workspace = true }`,
+  tags:["cargo workspace","monorepo","architecture"]
+},
+{
+  id:"9.4", part:"p9",
+  en:"Builder, Newtype & Typestate Patterns", bn:"API ডিজাইন প্যাটার্ন",
+  what:`তিনটা কমন Rust ডিজাইন প্যাটার্ন — Builder (ধাপে ধাপে অবজেক্ট তৈরি, অনেক optional field সামলানোর জন্য), Newtype (<code>struct Meters(f64)</code> — primitive টাইপকে wrap করে সিমান্টিক অর্থ ও টাইপ-সেফটি যোগ করা), Typestate (কম্পাইল-টাইমে অবজেক্টের "অবস্থা" এনফোর্স করা, ভুল অর্ডারে মেথড কল করা impossible করে দেওয়া)।`,
+  where:`Builder — কনফিগারেশন অবজেক্ট, HTTP ক্লায়েন্ট সেটআপ। Newtype — ইউনিট বিভ্রান্তি এড়ানো (মিটার বনাম ফিট), ID টাইপ আলাদা করা (<code>UserId</code> বনাম <code>OrderId</code>, দুটোই আসলে <code>u64</code> কিন্তু ভুলে অদলবদল করা আটকাতে)। Typestate — স্টেট মেশিন যেখানে নির্দিষ্ট ধাপ নির্দিষ্ট ক্রমেই হতে হবে (যেমন একটা কানেকশন যা প্রথমে "connected" তারপরই "authenticated" হতে পারে)।`,
+  why:`Newtype ছাড়া দুটো <code>u64</code> প্যারামিটার (<code>user_id</code>, <code>order_id</code>) ভুলে সোয়াপ করে কল করা কম্পাইলার ধরতে পারে না (দুটোই একই টাইপ) — কিন্তু <code>UserId(u64)</code> আর <code>OrderId(u64)</code> আলাদা টাইপ হলে সোয়াপ করলে কম্পাইল-টাইম এরর। এটা "প্রোডাকশন বাগ যা কম্পাইল-টাইমেই মরে গেলো" এর একটা ক্লাসিক উদাহরণ — রানটাইমে ধরা পড়তে এই বাগের হয়তো সপ্তাহ লেগে যেত।`,
+  alt:`Typestate প্যাটার্ন শক্তিশালী কিন্তু ভার্বোজ — প্রতিটা স্টেটের জন্য আলাদা টাইপ, মেথড implement করতে হয়। ছোট state machine এ এনামের সাথে রানটাইম চেক (<code>assert!</code>) সহজ এবং যথেষ্ট হতে পারে — Typestate তখনই সার্থক যখন ভুল-অর্ডার কল প্রোডাকশনে সত্যিই বিপজ্জনক (যেমন সিকিউরিটি-সেন্সিটিভ প্রোটোকল স্টেট মেশিন)।`,
+  note:`Newtype pattern হলো Rust এ সবচেয়ে বেশি "রিটার্ন অন ইনভেস্টমেন্ট" দেওয়া প্যাটার্ন — প্রায় শূন্য রানটাইম কস্ট (compile-time এ অদৃশ্য হয়ে যায়, <code>#[repr(transparent)]</code>), কিন্তু বিশাল ক্লাস অফ বাগ প্রিভেন্ট করে। নতুন প্রোজেক্টে ID টাইপের জন্য শুরু থেকেই newtype ব্যবহার করার অভ্যাস করা ভালো।`,
+  code:`struct UserId(u64);
+struct OrderId(u64);
+fn refund(order: OrderId, user: UserId) { /* ... */ }
+// refund(user_id, order_id) — ভুল অর্ডারে কল করলে
+// compile error, কারণ টাইপ মেলে না`,
+  tags:["builder pattern","newtype","typestate","API design"]
+},
+{
+  id:"9.5", part:"p9",
+  en:"API Guidelines, SemVer & MSRV", bn:"Rust API Guidelines, SemVer, MSRV",
+  what:`রাস্ট টিমের অফিশিয়াল <b>API Guidelines</b> ডকুমেন্ট বলে দেয় কীভাবে idiomatic, প্রেডিক্টেবল পাবলিক API ডিজাইন করতে হয় (নেমিং কনভেনশন, trait implement করার নিয়ম, ডকুমেন্টেশন স্ট্যান্ডার্ড)। <b>SemVer</b> (Semantic Versioning) discipline মানে <code>major.minor.patch</code> ভার্সনিং এ breaking change শুধু major bump এ। <b>MSRV</b> (Minimum Supported Rust Version) হলো একটা crate যে সর্বনিম্ন Rust ভার্সনে কম্পাইল হবে বলে প্রতিশ্রুতি দেয়।`,
+  where:`যেকোনো crate যা crates.io তে পাবলিশ হবে বা একাধিক টিম/প্রোজেক্টে ব্যবহৃত হবে — internal shared লাইব্রেরিতেও একই গুরুত্বপূর্ণ।`,
+  why:`SemVer discipline না মানলে (যেমন patch ভার্সনে breaking change চুপচাপ ঢুকিয়ে দেওয়া) downstream ইউজারদের প্রোডাকশন বিল্ড হুট করে ভেঙে যেতে পারে <code>cargo update</code> চালানোর পরে — এটা বিশ্বাসযোগ্যতা নষ্ট করে এবং পুরো ইকোসিস্টেমে ব্যথার কারণ হয়। MSRV ঘোষণা না করলে ইউজাররা জানে না তাদের টুলচেইন compatible কিনা — একটা সারপ্রাইজ কম্পাইল ফেইলিওর হয়ে সামনে আসে।`,
+  alt:`ছোট, ইন্টারনাল-ওনলি প্রোজেক্টে এত কড়াকড়ি SemVer/MSRV পলিসি হয়তো ওভারকিল মনে হতে পারে — কিন্তু এমনকি ছোট টিমেও, একবার একাধিক সার্ভিস একটা shared internal crate এর উপর নির্ভর করলে একই সমস্যা শুরু হয় ছোট স্কেলে।`,
+  note:`<code>cargo-semver-checks</code> ক্রেট automatically ডিটেক্ট করে একটা নতুন রিলিজ আসলে breaking change এনেছে কিনা (public API ডিফ করে) — CI তে যোগ করলে দুর্ঘটনাক্রমে breaking change patch ভার্সনে ফাঁস হওয়া আটকানো যায়।`,
+  tags:["API guidelines","SemVer","MSRV","cargo-semver-checks"]
+},
+];
+
+/* ================= PART 10 — RESOURCES (static, not a topic-card) ================= */
+const RESOURCES = [
+  {title:"The Rust Programming Language (বই)", url:"https://doc.rust-lang.org/book/", desc:"তুমি যেটা নিয়ে জিজ্ঞেস করেছো — এটাই ভিত্তি, কিন্তু বেসিক পর্যন্তই সীমাবদ্ধ।"},
+  {title:"Rust by Example", url:"https://doc.rust-lang.org/rust-by-example/", desc:"রানযোগ্য কোড উদাহরণ দিয়ে শেখা — থিওরির বদলে প্র্যাকটিক্যাল স্নিপেট।"},
+  {title:"Rustlings", url:"https://rustlings.rust-lang.org/", desc:"ছোট ছোট এক্সারসাইজ — কম্পাইল এরর ফিক্স করতে করতে শেখা, হাতে-কলমে অভ্যাস তৈরির জন্য চমৎকার।"},
+  {title:"Comprehensive Rust (by Google)", url:"https://google.github.io/comprehensive-rust/", desc:"Google এর ইন্টারনাল Rust কোর্স, পাবলিকলি ফ্রি — ভালো গভীরতা, এমনকি Android/embedded অংশও আছে।"},
+  {title:"Rust Design Patterns", url:"https://rust-unofficial.github.io/patterns/", desc:"Idiomatic প্যাটার্ন আর অ্যান্টি-প্যাটার্ন — Newtype, Builder, Typestate সহ আরো অনেক কিছু বিস্তারিত।"},
+  {title:"The Rustonomicon", url:"https://doc.rust-lang.org/nomicon/", desc:"Unsafe Rust এর গভীরে — শুধু তখনই পড়ো যখন সত্যিই unsafe কোড লিখতে হবে।"},
+  {title:"Asynchronous Programming in Rust", url:"https://rust-lang.github.io/async-book/", desc:"async/await এর আন্ডার-দ্য-হুড মেকানিজম — Future, Pin, executor কীভাবে কাজ করে।"},
+  {title:"Zero To Production In Rust", url:"https://www.zero2prod.com/", desc:"একটা পুরো প্রোডাকশন ব্যাকএন্ড বানানোর হাতে-কলমে বই — এই গাইডে যা টপিক আকারে আছে, ওই বইয়ে একটা রিয়েল প্রোজেক্টের মধ্য দিয়ে শেখানো হয়।"},
+  {title:"Effective Rust", url:"https://www.lurklurk.org/effective-rust/", desc:"অভিজ্ঞ ডেভদের জন্য — ৩৫টা নির্দিষ্ট 'আইটেম' আকারে প্রোডাকশন-লেভেল বেস্ট প্র্যাকটিস।"},
+  {title:"This Week in Rust", url:"https://this-week-in-rust.org/", desc:"সাপ্তাহিক নিউজলেটার — নতুন ক্রেট, RFC, ইকোসিস্টেম আপডেট চোখে চোখে রাখার সবচেয়ে ভালো উপায়।"},
+  {title:"Tokio Tutorial", url:"https://tokio.rs/tokio/tutorial", desc:"tokio এর অফিশিয়াল টিউটোরিয়াল — mini-Redis বানিয়ে async ইকোসিস্টেম শেখা।"},
+  {title:"Awesome Rust (GitHub)", url:"https://github.com/rust-unofficial/awesome-rust", desc:"ক্যাটাগরি অনুযায়ী সাজানো ক্রেট লিস্ট — কোনো কাজের জন্য 'সেরা ক্রেট কোনটা' খোঁজার প্রথম জায়গা।"},
+];
+
+function renderResources(){
+  const html = `
+    <div class="part-header">
+      <span class="part-num">10</span>
+      <h2>শেখার পরবর্তী ধাপ ও রিসোর্স</h2>
+    </div>
+    <p class="part-intro">বই শেষ করার পর ঠিক কোন রাস্তায় হাঁটবে — এই লিস্টটা সেই ম্যাপ। উপর থেকে নিচে ক্রমানুসারে পড়ার দরকার নেই, নিজের প্রয়োজন অনুযায়ী বেছে নাও।</p>
+    <div class="res-grid">
+      ${RESOURCES.map(r=>`<div class="res-card"><a href="${r.url}" target="_blank" rel="noopener">${r.title} ↗</a><p>${r.desc}</p></div>`).join("")}
+    </div>`;
+  const section = document.getElementById("resources-section");
+  section.id = "";
+  section.innerHTML = `<section class="part-section" id="resources-anchor">${html}</section>`;
+
+  document.getElementById("navList").innerHTML += `
+    <div class="nav-part">
+      <div class="nav-part-title"><span class="num">10</span>শেখার পরবর্তী ধাপ</div>
+      <a class="nav-item" href="#resources-anchor"><span class="en">resources</span>রিসোর্স লিস্ট</a>
+    </div>`;
+}
+
+/* ---------------- rendering ---------------- */
+function hl(code){
+  return code
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/(\/\/.*)/g, '<span class="cm">$1</span>')
+    .replace(/"([^"]*)"/g, '<span class="st">"$1"</span>')
+    .replace(/\b(fn|let|mut|pub|struct|enum|impl|trait|async|await|match|if|else|for|in|while|loop|return|use|mod|crate|self|Self|dyn|move|where|type|const|static|unsafe|as|ref)\b/g, '<span class="kw">$1</span>')
+    .replace(/\b([A-Z][A-Za-z0-9_]*)\b/g, '<span class="ty">$1</span>')
+    .replace(/\b([a-z_][a-z0-9_]*)(?=\()/g, '<span class="fn">$1</span>')
+    .replace(/(#\[[^\]]*\])/g, '<span class="mc">$1</span>');
+}
+
+function fieldRow(icon, label, text, isWhy){
+  if(!text) return "";
+  return `<div class="field${isWhy? ' why':''}">
+    <div class="field-label"><span class="ic">${icon}</span>${label}</div>
+    <div class="field-text">${text}</div>
+  </div>`;
+}
+
+function renderCard(t){
+  const codeHtml = t.code ? `<div class="field"><div class="field-label"><span class="ic">⌨</span>উদাহরণ কোড</div><div class="code-block">${hl(t.code)}</div></div>` : "";
+  const tags = t.tags ? `<div class="field"><div class="tag-row">${t.tags.map(x=>`<span class="tag">${x}</span>`).join("")}</div></div>` : "";
+  return `<article class="card" id="${t.id}" data-search="${(t.en+' '+t.bn+' '+t.what+' '+t.where+' '+t.why+' '+(t.alt||'')+' '+(t.note||'')).toLowerCase()}">
+    <div class="card-head">
+      <div class="card-head-left">
+        <span class="card-id mono">${t.id}</span>
+        <span class="card-title-en">${t.en}</span>
+        <span class="card-title-bn">${t.bn}</span>
+      </div>
+    </div>
+    <div class="card-body">
+      ${fieldRow("🔧","কাজ ও উদ্দেশ্য (What &amp; Why)", t.what)}
+      ${fieldRow("📍","কোথায় ব্যবহার হয়", t.where)}
+      ${fieldRow("⚖️","এটাই কেন, অন্যটা নয়", t.why, true)}
+      ${fieldRow("🔀","বিকল্প অপশন আছে কি?", t.alt)}
+      ${fieldRow("💡","প্রফেশনাল নোট / টিপস", t.note)}
+      ${codeHtml}
+      ${tags}
+    </div>
+  </article>`;
+}
+
+function renderAll(){
+  const root = document.getElementById("topicsRoot");
+  let html = "";
+  PARTS.forEach(p=>{
+    const items = TOPICS.filter(t=>t.part===p.id);
+    if(items.length===0) return;
+    html += `<section class="part-section" data-part="${p.id}">
+      <div class="part-header">
+        <span class="part-num">${p.num}</span>
+        <h2>${p.title}</h2>
+      </div>
+      <div class="part-sub mono" style="margin:-14px 0 14px;">${p.sub} { ${items.length} topics }</div>
+      <p class="part-intro">${p.intro}</p>
+      ${items.map(renderCard).join("\n")}
+    </section>`;
+  });
+  root.innerHTML = html;
+
+  const nav = document.getElementById("navList");
+  let navHtml = "";
+  PARTS.forEach(p=>{
+    const items = TOPICS.filter(t=>t.part===p.id);
+    if(items.length===0) return;
+    navHtml += `<div class="nav-part">
+      <div class="nav-part-title"><span class="num">${p.num}</span>${p.title}</div>
+      ${items.map(t=>`<a class="nav-item" href="#${t.id}"><span class="en">${t.en}</span>${t.bn}</a>`).join("")}
+    </div>`;
+  });
+  document.getElementById("navList").innerHTML = navHtml;
+  document.getElementById("cardCount").textContent = `${TOPICS.length} topics indexed`;
+}
+
+function filterCards(){
+  const q = document.getElementById("searchInput").value.trim().toLowerCase();
+  const cards = document.querySelectorAll(".card");
+  const sections = document.querySelectorAll(".part-section");
+  let anyVisible = false;
+  cards.forEach(c=>{
+    const match = !q || c.dataset.search.includes(q);
+    c.style.display = match ? "" : "none";
+    if(match) anyVisible = true;
+  });
+  sections.forEach(s=>{
+    const visibleCards = s.querySelectorAll('.card:not([style*="display: none"])').length;
+    s.style.display = visibleCards>0 ? "" : "none";
+  });
+  document.querySelectorAll(".nav-item").forEach(n=>{
+    const id = n.getAttribute("href").slice(1);
+    const card = document.getElementById(id);
+    n.style.display = (!q || (card && card.style.display!=="none")) ? "" : "none";
+  });
+  let resNote = document.getElementById("noResultsNote");
+  if(!anyVisible){
+    if(!resNote){
+      resNote = document.createElement("div");
+      resNote.id = "noResultsNote";
+      resNote.className = "no-results";
+      resNote.textContent = "// কোনো টপিক পাওয়া যায়নি — অন্য কিছু লিখে দেখো";
+      document.getElementById("topicsRoot").appendChild(resNote);
+    }
+  } else if(resNote) { resNote.remove(); }
+}
+
+/* active nav on scroll */
+function setupScrollSpy(){
+  const items = document.querySelectorAll(".card");
+  const navItems = document.querySelectorAll(".nav-item");
+  const obs = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        navItems.forEach(n=>n.classList.remove("active"));
+        const active = document.querySelector(`.nav-item[href="#${e.target.id}"]`);
+        if(active) active.classList.add("active");
+      }
+    });
+  }, {rootMargin: "-10% 0px -75% 0px"});
+  items.forEach(i=>obs.observe(i));
+}
+
+/* theme */
+function setTheme(mode){
+  document.documentElement.setAttribute("data-theme", mode);
+  document.getElementById("btn-dark").classList.toggle("active", mode==="dark");
+  document.getElementById("btn-light").classList.toggle("active", mode==="light");
+}
+
+renderAll();
+renderResources();
+setupScrollSpy();
+setTheme("dark");
+</script>
+</body>
+</html>

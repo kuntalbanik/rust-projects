@@ -1,0 +1,2565 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rust প্রোডাকশন-রেডি রেফারেন্স — 61 Concepts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/vs2015.min.css">
+<style>
+:root {
+  --bg: #120f0e;
+  --bg-panel: #181312;
+  --bg-card: #1c1615;
+  --border: #2e2321;
+  --rust-orange: #DE7B32;
+  --rust-red: #CE422B;
+  --accent-cool: #6FC2CE;
+  --text-main: #ece3df;
+  --text-dim: #a8938c;
+  --text-faint: #6b5a54;
+  --radius: 10px;
+  --font-bn: 'Hind Siliguri', sans-serif;
+  --font-ui: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text-main);
+  font-family: var(--font-bn);
+  font-size: 15.5px;
+  line-height: 1.7;
+}
+::selection { background: var(--rust-orange); color: #1a0f08; }
+
+.topbar {
+  position: sticky; top: 0; z-index: 50;
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 24px;
+  background: rgba(18,15,14,0.92);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+}
+.gear { width: 32px; height: 32px; flex-shrink: 0; color: var(--rust-orange); }
+.topbar .title {
+  font-family: var(--font-ui);
+  font-weight: 800;
+  font-size: 17px;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+.topbar .title small {
+  display: block;
+  font-weight: 500;
+  font-size: 11.5px;
+  color: var(--rust-orange);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-top: 1px;
+}
+.topbar .stats {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-dim);
+  display: flex; gap: 18px;
+}
+.topbar .stats b { color: var(--accent-cool); }
+.menu-toggle {
+  display: none;
+  background: var(--bg-card); border: 1px solid var(--border);
+  color: var(--text-main); border-radius: 8px; padding: 8px 12px;
+  font-family: var(--font-ui); font-size: 13px; cursor: pointer;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.sidebar {
+  position: sticky;
+  top: 61px;
+  height: calc(100vh - 61px);
+  overflow-y: auto;
+  border-right: 1px solid var(--border);
+  padding: 20px 14px 60px;
+  background: var(--bg-panel);
+}
+.sidebar::-webkit-scrollbar { width: 6px; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+.search-box { position: relative; margin-bottom: 18px; }
+.search-box input {
+  width: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 12px 9px 34px;
+  color: var(--text-main);
+  font-family: var(--font-bn);
+  font-size: 13.5px;
+  outline: none;
+}
+.search-box input:focus { border-color: var(--rust-orange); }
+.search-box svg {
+  position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+  width: 14px; height: 14px; color: var(--text-faint);
+}
+
+.nav-group { margin-bottom: 4px; }
+.nav-cat {
+  font-family: var(--font-ui);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--rust-orange);
+  padding: 14px 10px 6px;
+  opacity: 0.9;
+}
+.nav-group ul { list-style: none; margin: 0; padding: 0; }
+.nav-link {
+  display: block;
+  padding: 7px 10px;
+  border-radius: 6px;
+  color: var(--text-dim);
+  text-decoration: none;
+  font-size: 13.5px;
+  font-family: var(--font-bn);
+  border-left: 2px solid transparent;
+  transition: background .12s, color .12s;
+}
+.nav-link:hover { background: rgba(222,123,50,0.09); color: var(--text-main); }
+.nav-link.active {
+  background: rgba(222,123,50,0.16);
+  color: #fff;
+  border-left-color: var(--rust-orange);
+}
+.nav-link.hidden { display: none; }
+.nav-group.hidden { display: none; }
+
+main { padding: 32px 40px 100px; min-width: 0; }
+
+.hero { margin-bottom: 40px; padding-bottom: 28px; border-bottom: 1px solid var(--border); }
+.hero .eyebrow {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--rust-orange);
+  letter-spacing: 0.05em;
+  margin-bottom: 10px;
+}
+.hero h1 {
+  font-family: var(--font-ui);
+  font-weight: 800;
+  font-size: clamp(26px, 4vw, 38px);
+  color: #fff;
+  letter-spacing: -0.02em;
+  margin: 0 0 14px;
+}
+.hero p { max-width: 720px; color: var(--text-dim); font-size: 15.5px; margin: 0; }
+.hero .accent { color: var(--accent-cool); font-weight: 600; }
+
+.cat-heading {
+  font-family: var(--font-ui);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--rust-orange);
+  margin: 56px 0 18px;
+  padding-top: 10px;
+  display: flex; align-items: center; gap: 12px;
+}
+.cat-heading::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--border), transparent);
+}
+
+.topic {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px 24px 24px;
+  margin-bottom: 22px;
+  scroll-margin-top: 80px;
+}
+.topic-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 16px; }
+.topic-index {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: #1a0f08;
+  background: var(--rust-orange);
+  border-radius: 5px;
+  padding: 2px 7px;
+  font-weight: 600;
+}
+.topic-head h3 {
+  font-family: var(--font-ui);
+  font-weight: 700;
+  font-size: 19px;
+  color: #fff;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+.topic-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px 22px;
+  margin-bottom: 18px;
+}
+.field p { margin: 0; color: var(--text-main); font-size: 14.5px; }
+.field-label {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 5px;
+}
+.field-label .en { text-transform: none; font-weight: 500; letter-spacing: 0; opacity: 0.7; }
+.field.note {
+  grid-column: 1 / -1;
+  background: rgba(222,123,50,0.07);
+  border: 1px solid rgba(222,123,50,0.2);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+.field.note .field-label { color: var(--rust-orange); }
+
+pre { margin: 0; border-radius: 8px; overflow-x: auto; border: 1px solid var(--border); }
+pre code.hljs {
+  font-family: var(--font-mono) !important;
+  font-size: 13px !important;
+  padding: 16px 18px !important;
+  line-height: 1.6;
+}
+
+footer {
+  text-align: center;
+  padding: 30px 20px 60px;
+  color: var(--text-faint);
+  font-size: 12.5px;
+  font-family: var(--font-ui);
+}
+footer .gear { width: 22px; height: 22px; opacity: 0.6; margin: 0 auto 10px; display:block; }
+
+#toTop {
+  position: fixed; right: 26px; bottom: 26px;
+  width: 42px; height: 42px; border-radius: 50%;
+  background: var(--rust-orange); color: #1a0f08;
+  border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 14px rgba(222,123,50,0.35);
+  opacity: 0; pointer-events: none;
+  transition: opacity .2s, transform .2s;
+  z-index: 60;
+}
+#toTop.show { opacity: 1; pointer-events: auto; }
+#toTop:hover { transform: translateY(-2px); }
+
+@media (max-width: 980px) {
+  .layout { grid-template-columns: 1fr; }
+  .sidebar {
+    position: fixed; top: 0; left: 0; bottom: 0; width: 82%; max-width: 320px;
+    transform: translateX(-100%);
+    transition: transform .25s ease;
+    z-index: 100;
+    height: 100vh;
+    padding-top: 76px;
+  }
+  .sidebar.open { transform: translateX(0); box-shadow: 20px 0 40px rgba(0,0,0,0.5); }
+  .menu-toggle { display: block; }
+  main { padding: 24px 18px 100px; }
+  .topic-grid { grid-template-columns: 1fr; }
+  .topbar .stats { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <svg class="gear" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M50 20 L56 20 L58 32 L67 35 L76 28 L81 33 L74 42 L77 51 L89 53 L89 59 L77 61 L74 70 L81 79 L76 84 L67 77 L58 80 L56 92 L50 92 L48 80 L39 77 L30 84 L25 79 L32 70 L29 61 L17 59 L17 53 L29 51 L32 42 L25 33 L30 28 L39 35 L48 32 Z" stroke="currentColor" stroke-width="4" fill="none" stroke-linejoin="round"/>
+    <circle cx="53" cy="56" r="14" stroke="currentColor" stroke-width="4" fill="none"/>
+  </svg>
+  <button class="menu-toggle" id="menuToggle">☰ Topics</button>
+  <div class="title">Rust প্রোডাকশন রেফারেন্স<small>From The Book to Production-Grade</small></div>
+  <div class="stats"><span><b>61</b> Concepts</span><span><b>18</b> Categories</span></div>
+</div>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="search-box">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input type="text" id="searchInput" placeholder="টপিক খুঁজুন... (search topic)">
+    </div>
+    <div class="nav-group"><div class="nav-cat">Getting Started</div><ul>
+<li><a href="#topic-1" class="nav-link" data-search="installation &amp; toolchain (rustup)">Installation &amp; Toolchain (rustup)</a></li>
+<li><a href="#topic-2" class="nav-link" data-search="cargo basics">Cargo Basics</a></li>
+</ul></div>
+<div class="nav-group"><div class="nav-cat">Core Syntax</div><ul>
+<li><a href="#topic-3" class="nav-link" data-search="variables and mutability">Variables and Mutability</a></li>
+<li><a href="#topic-4" class="nav-link" data-search="data types">Data Types</a></li>
+<li><a href="#topic-5" class="nav-link" data-search="functions">Functions</a></li>
+<li><a href="#topic-6" class="nav-link" data-search="comments">Comments</a></li>
+<li><a href="#topic-7" class="nav-link" data-search="control flow">Control Flow</a></li>
+</ul></div>
+<div class="nav-group"><div class="nav-cat">Ownership &amp; Memory</div><ul>
+<li><a href="#topic-8" class="nav-link" data-search="ownership">Ownership</a></li>
+<li><a href="#topic-9" class="nav-link" data-search="references and borrowing">References and Borrowing</a></li>
+<li><a href="#topic-10" class="nav-link" data-search="the slice type">The Slice Type</a></li>
+</ul></div>
+<div class="nav-group"><div class="nav-cat">Structs &amp; Enums</div><ul>
+<li><a href="#topic-11" class="nav-link" data-search="structs">Structs</a></li>
+<li><a href="#topic-12" class="nav-link" data-search="methods">Methods</a></li>
+<li><a href="#topic-13" class="nav-link" data-search="enums">Enums</a></li>
+<li><a href="#topic-14" class="nav-link" data-search="pattern matching (match)">Pattern Matching (match)</a></li>
+<li><a href="#topic-15" class="nav-link" data-search="if let / let-else">if let / let-else</a></li>
+</ul></div>
+<div class="nav-group"><div class="nav-cat">Project Organization</div><ul>
+<li><a href="#topic-16" class="nav-link" data-search="packages and crates">Packages and Crates</a></li>
+<li><a href="#topic-17" class="nav-link" data-search="modules &amp; privacy">Modules &amp; Privacy</a></li>
+<li><a href="#topic-18" class="nav-link" data-search="use keyword &amp; paths">use Keyword &amp; Paths</a></li>
+<li><a href="#topic-19" class="nav-link" data-search="cargo release profiles">Cargo Release Profiles</a></li>
+<li><a href="#topic-20" class="nav-link" data-search="publishing crates &amp; workspaces">Publishing Crates &amp; Workspaces</a></li>
+</ul></div>
+<div class="nav-group"><div class="nav-cat">Collections</div><ul>
+<li><a href="#topic-21" class="nav-link" data-search="vectors (vec&lt;t&gt;)">Vectors (Vec&lt;T&gt;)</a></li>
+<li><a href="#topic-22" class="nav-link" data-search="strings (utf-8)">Strings (UTF-8)</a></li>
+<li><a href="#topic-23" class="nav-link" data-search="hash maps">Hash Maps</a></li>
+</ul></div>
+<div class="nav-group"><div class="nav-cat">Error Handling</div><ul>
+<li><a href="#topic-24" class="nav-link" data-search="panic! (unrecoverable errors)">panic! (Unrecoverable Errors)</a></li>
+<li><a href="#topic-25" class="nav-link" data-search="result (recoverable errors)">Result (Recoverable Errors)</a></li>
+<li><a href="#topic-26" class="nav-link" data-search="to panic! or not to panic! (strategy)">To panic! or Not to panic! (Strategy)</a></li>
+</ul></div>
+<div class="nav-group"><div class="nav-cat">Generics &amp; Traits</div><ul>
+<li><a href="#topic-27" class="nav-link" data-search="generic types">Generic Types</a></li>
+<li><a href="#topic-28" class="nav-link" data-search="traits">Traits</a></li>
+<li><a href="#topic-29" class="nav-link" data-search="lifetimes">Lifetimes</a></li>
+<li><a href="#topic-30" class="nav-link" data-search="derivable traits">Derivable Traits</a></li>
+</ul></div>
+<div class="nav-group"><div class="nav-cat">Functional Features</div><ul>
+<li><a href="#topic-31" class="nav-link" data-search="closures">Closures</a></li>
+<li><a href="#topic-32" class="nav-link" data-search="iterators">Iterators</a></li>
+<li><a href="#topic-33" class="nav-link" data-search="loops vs. iterators (performance)">Loops vs. Iterators (Performance)</a></li>
+</ul></div>
+<div class="nav-group"><div class="nav-cat">Testing</div><ul>
+<li><a href="#topic-34" class="nav-link" data-search="writing tests">Writing Tests</a></li>
+<li><a href="#topic-35" class="nav-link" data-search="controlling test execution">Controlling Test Execution</a></li>
+<li><a href="#topic-36" class="nav-link" data-search="test organization (unit vs integration)">Test Organization (Unit vs Integration)</a></li>
+</ul></div>
+<div class="nav-group"><div class="nav-cat">CLI &amp; I/O</div><ul>
+<li><a href="#topic-37" class="nav-link" data-search="command-line arguments">Command-Line Arguments</a></li>
+<li><a href="#topic-38" class="nav-link" data-search="reading files &amp; environment variables">Reading Files &amp; Environment Variables</a></li>
+<li><a href="#topic-39" class="nav-link" data-search="redirecting errors to standard error">Redirecting Errors to Standard Error</a></li>
+</ul></div>
+<div class="nav-group"><div class="nav-cat">Smart Pointers</div><ul>
+<li><a href="#topic-40" class="nav-link" data-search="box&lt;t&gt;">Box&lt;T&gt;</a></li>
+<li><a href="#topic-41" class="nav-link" data-search="deref trait">Deref Trait</a></li>
+<li><a href="#topic-42" class="nav-link" data-search="drop trait">Drop Trait</a></li>
+<li><a href="#topic-43" class="nav-link" data-search="rc&lt;t&gt; — reference counted pointer">Rc&lt;T&gt; — Reference Counted Pointer</a></li>
+<li><a href="#topic-44" class="nav-link" data-search="refcell&lt;t&gt; &amp; interior mutability">RefCell&lt;T&gt; &amp; Interior Mutability</a></li>
+<li><a href="#topic-45" class="nav-link" data-search="reference cycles &amp; memory leaks">Reference Cycles &amp; Memory Leaks</a></li>
+</ul></div>
+<div class="nav-group"><div class="nav-cat">Concurrency</div><ul>
+<li><a href="#topic-46" class="nav-link" data-search="threads">Threads</a></li>
+<li><a href="#topic-47" class="nav-link" data-search="message passing (channels)">Message Passing (Channels)</a></li>
+<li><a href="#topic-48" class="nav-link" data-search="shared-state concurrency (mutex/arc)">Shared-State Concurrency (Mutex/Arc)</a></li>
+<li><a href="#topic-49" class="nav-link" data-search="send and sync traits">Send and Sync Traits</a></li>
+</ul></div>
+<div class="nav-group"><div class="nav-cat">Async Programming</div><ul>
+<li><a href="#topic-50" class="nav-link" data-search="futures and the async syntax">Futures and the Async Syntax</a></li>
+<li><a href="#topic-51" class="nav-link" data-search="applying concurrency with async">Applying Concurrency with Async</a></li>
+<li><a href="#topic-52" class="nav-link" data-search="working with any number of futures">Working With Any Number of Futures</a></li>
+<li><a href="#topic-53" class="nav-link" data-search="streams">Streams</a></li>
+</ul></div>
+<div class="nav-group"><div class="nav-cat">OOP &amp; Trait Objects</div><ul>
+<li><a href="#topic-54" class="nav-link" data-search="trait objects (dyn trait)">Trait Objects (dyn Trait)</a></li>
+<li><a href="#topic-55" class="nav-link" data-search="object-oriented design patterns">Object-Oriented Design Patterns</a></li>
+</ul></div>
+<div class="nav-group"><div class="nav-cat">Patterns</div><ul>
+<li><a href="#topic-56" class="nav-link" data-search="pattern syntax (advanced)">Pattern Syntax (Advanced)</a></li>
+</ul></div>
+<div class="nav-group"><div class="nav-cat">Advanced</div><ul>
+<li><a href="#topic-57" class="nav-link" data-search="unsafe rust">Unsafe Rust</a></li>
+<li><a href="#topic-58" class="nav-link" data-search="advanced traits">Advanced Traits</a></li>
+<li><a href="#topic-59" class="nav-link" data-search="advanced types">Advanced Types</a></li>
+<li><a href="#topic-60" class="nav-link" data-search="macros">Macros</a></li>
+</ul></div>
+<div class="nav-group"><div class="nav-cat">Networking</div><ul>
+<li><a href="#topic-61" class="nav-link" data-search="building a tcp/web server">Building a TCP/Web Server</a></li>
+</ul></div>
+
+  </aside>
+
+  <main>
+    <div class="hero">
+      <div class="eyebrow">// fn main() — production readiness guide</div>
+      <h1>Rust দিয়ে প্রোডাকশন-গ্রেড ডেভেলপার হওয়ার রোডম্যাপ</h1>
+      <p>Ownership ও borrowing থেকে শুরু করে concurrency, async প্রোগ্রামিং ও unsafe Rust পর্যন্ত <span class="accent">61টি core concept</span> — The Rust Book-এর কাঠামো অনুসরণ করে, প্রতিটার concept, purpose, use-case, ও একজন professional developer-এর নোট সহ। বাম মেনু থেকে সরাসরি চলে যান, বা সার্চ করুন।</p>
+    </div>
+    <h2 class="cat-heading" id="cat-Getting-Started">Getting Started</h2>
+
+<section class="topic" id="topic-1" data-search="installation &amp; toolchain (rustup)">
+  <div class="topic-head">
+    <span class="topic-index">01</span>
+    <h3>Installation &amp; Toolchain (rustup)</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>rustup হলো Rust-এর official installer ও version manager — এটা দিয়ে compiler (rustc), package manager (cargo), এবং একাধিক toolchain version ইনস্টল ও সুইচ করা যায়।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>সিস্টেমে Rust ডেভেলপমেন্ট এনভায়রনমেন্ট সেটআপ ও ভার্সন ম্যানেজ করা।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>প্রতিটা Rust প্রোজেক্টের শুরুতে, CI/CD pipeline-এ নির্দিষ্ট toolchain version pin করায়।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>rustup toolchain install stable/nightly দিয়ে একাধিক version রাখা যায় — প্রোডাকশনে সবসময় stable channel ব্যবহার করুন, nightly শুধু experimental feature টেস্ট করতে।rust-toolchain.toml ফাইলে version pin করে রাখলে পুরো টিম একই compiler version ব্যবহার করে, যা 'works on my machine' সমস্যা কমায়।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust"># ইনস্টল করা
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+
+# ভার্সন চেক ও আপডেট
+rustc --version
+rustup update stable</code></pre>
+</section>
+
+<section class="topic" id="topic-2" data-search="cargo basics">
+  <div class="topic-head">
+    <span class="topic-index">02</span>
+    <h3>Cargo Basics</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>Cargo হলো Rust-এর build system ও package manager — dependency resolve, compile, test, এবং crate publish সবকিছুই এর মাধ্যমে হয়।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>প্রোজেক্ট তৈরি, dependency ম্যানেজমেন্ট, বিল্ড ও রান করার একটা ইউনিফাইড ওয়ার্কফ্লো দেওয়া।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>প্রতিটা Rust প্রোজেক্টে — Cargo.toml দিয়ে metadata ও dependency, Cargo.lock দিয়ে exact version lock করা হয়।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>Cargo.lock সবসময় version control-এ কমিট করুন (application-এর জন্য; library crate-এর জন্য সাধারণত না) — এটা নিশ্চিত করে সবাই একই dependency version পাচ্ছে, reproducible build দেয়। cargo check ব্যবহার করুন দ্রুত syntax/type error চেক করতে, পুরো build করার আগে — এটা অনেক দ্রুত।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">cargo new my_project
+cd my_project
+cargo build          # ডিবাগ বিল্ড
+cargo run            # কম্পাইল + রান
+cargo check          # শুধু টাইপ-চেক, দ্রুত
+cargo build --release # অপ্টিমাইজড প্রোডাকশন বিল্ড</code></pre>
+</section>
+<h2 class="cat-heading" id="cat-Core-Syntax">Core Syntax</h2>
+
+<section class="topic" id="topic-3" data-search="variables and mutability">
+  <div class="topic-head">
+    <span class="topic-index">03</span>
+    <h3>Variables and Mutability</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>Rust-এ let দিয়ে ভ্যারিয়েবল ডিফল্টভাবে immutable — পরিবর্তনযোগ্য করতে হলে let mut লিখতে হয়। const দিয়ে compile-time constant ডিফাইন করা হয়।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>ডিফল্টভাবে immutability enforce করে accidental mutation থেকে সৃষ্ট বাগ প্রতিরোধ করা।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>প্রায় প্রতিটা লাইনে — কিন্তু বিশেষভাবে shared state, concurrent কোডে immutability-ই মূল safety guarantee।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>Immutability Rust-এর সবচেয়ে গুরুত্বপূর্ণ design decision — 'অপ্রয়োজনে mut লিখবেন না' এটাই idiomatic। Shadowing (একই নামে let দিয়ে নতুন ভ্যারিয়েবল বানানো) mut থেকে আলাদা — shadowing টাইপ বদলাতে পারে, mut পারে না।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">fn main() {
+    let x = 5;
+    // x = 6; // কম্পাইল এরর: cannot assign twice to immutable variable
+    let mut y = 5;
+    y = 6; // ঠিক আছে
+    const MAX_POINTS: u32 = 100_000;
+    let x = x + 1; // shadowing, নতুন বাইন্ডিং
+    println!("{y} {x} {MAX_POINTS}");
+}</code></pre>
+</section>
+
+<section class="topic" id="topic-4" data-search="data types">
+  <div class="topic-head">
+    <span class="topic-index">04</span>
+    <h3>Data Types</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>Rust statically ও strongly typed — scalar type (integer, float, bool, char) এবং compound type (tuple, array) built-in আছে। Integer overflow ডিবাগ বিল্ডে panic করে, রিলিজ বিল্ডে wrap করে।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>মেমরির সঠিক আকার ও আচরণ অনুযায়ী ডেটা সংরক্ষণ করা, compile-time এই টাইপ ভুল ধরে ফেলা।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>প্রতিটা variable declaration, function signature, struct field-এ।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>i32 ডিফল্ট integer টাইপ (বেশিরভাগ ক্ষেত্রে যথেষ্ট ফাস্ট), usize array/vector index-এর জন্য ব্যবহার হয়। Debug বিল্ডে overflow panic করলেও রিলিজ বিল্ডে silently wrap করে — সেফটি-ক্রিটিক্যাল কোডে checked_add/checked_sub ব্যবহার করা উচিত।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">fn main() {
+    let i: i32 = -5;
+    let u: u64 = 100;
+    let f: f64 = 3.14;
+    let b: bool = true;
+    let c: char = 'র';
+    let tup: (i32, f64, bool) = (500, 6.4, true);
+    let arr: [i32; 3] = [1, 2, 3];
+    println!("{i} {u} {f} {b} {c} {:?} {:?}", tup, arr);
+}</code></pre>
+</section>
+
+<section class="topic" id="topic-5" data-search="functions">
+  <div class="topic-head">
+    <span class="topic-index">05</span>
+    <h3>Functions</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>fn কীওয়ার্ড দিয়ে function ডিফাইন করা হয়; প্যারামিটার টাইপ অবশ্যই explicit লিখতে হয়, রিটার্ন টাইপ -&gt; দিয়ে। শেষ expression (সেমিকোলন ছাড়া) স্বয়ংক্রিয়ভাবে রিটার্ন হয়।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>কোড reuse ও modular ডিজাইন করা।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>প্রতিটা প্রোগ্রামের core building block, main() হলো এন্ট্রি পয়েন্ট।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>Statement আর expression-এর পার্থক্য Rust-এ গুরুত্বপূর্ণ — শেষ লাইনে সেমিকোলন থাকলে সেটা () (unit type) রিটার্ন করবে, ভুলে সেমিকোলন দিয়ে দেওয়া একটা কমন বিগিনার বাগ ('expected type, found ()')।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">fn add(a: i32, b: i32) -&gt; i32 {
+    a + b // কোনো সেমিকোলন নেই, এটাই রিটার্ন ভ্যালু
+}
+fn main() {
+    println!("{}", add(3, 4));
+}</code></pre>
+</section>
+
+<section class="topic" id="topic-6" data-search="comments">
+  <div class="topic-head">
+    <span class="topic-index">06</span>
+    <h3>Comments</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>// দিয়ে single-line, /* */ দিয়ে multi-line কমেন্ট। /// দিয়ে item-এর ঠিক উপরে doc-comment লিখলে সেটা দিয়ে rustdoc স্বয়ংক্রিয় ডকুমেন্টেশন জেনারেট করে, এমনকি Markdown ও code example সাপোর্ট করে।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>কোডের উদ্দেশ্য ব্যাখ্যা করা এবং auto-generated, testable ডকুমেন্টেশন তৈরি করা।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>Public API, library crate-এর প্রতিটা exported item-এ।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>Doc-comment-এর ভেতরের code example cargo test দিয়ে সত্যিই compile ও run হয় ('doctest') — এটা নিশ্চিত করে ডকুমেন্টেশন কখনো বাস্তব কোডের সাথে out-of-sync হয় না, যা অন্য ভাষায় সাধারণত হয়ে যায়।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">/// দুইটা সংখ্যা যোগ করে।
+///
+/// # Examples
+/// ```
+/// assert_eq!(my_crate::add(2, 3), 5);
+/// ```
+pub fn add(a: i32, b: i32) -&gt; i32 { a + b }</code></pre>
+</section>
+
+<section class="topic" id="topic-7" data-search="control flow">
+  <div class="topic-head">
+    <span class="topic-index">07</span>
+    <h3>Control Flow</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>if একটা expression (ভ্যালু রিটার্ন করতে পারে), loop/while/for তিন ধরনের লুপ আছে। loop-কে break দিয়ে ভ্যালুসহ রিটার্ন করানো যায়, labeled loop দিয়ে nested loop control করা যায়।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>শর্তসাপেক্ষ branching ও repetition করা।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>প্রায় সব লজিকে — validation, iteration, retry logic।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>if let value = condition {} else {} স্টাইলে if থেকে সরাসরি ভ্যালু assign করা যায় (let x = if cond { 5 } else { 6 };) — এটা Rust-কে অনেক expression-oriented করে তোলে। for loop iterator নিয়ে কাজ করে, তাই index-based লুপের চেয়ে for item in collection বেশি idiomatic ও নিরাপদ (out-of-bounds সম্ভাবনা নেই)।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">fn main() {
+    let x = if 5 &gt; 3 { "বড়" } else { "ছোট" };
+    let mut counter = 0;
+    let result = loop {
+        counter += 1;
+        if counter == 10 { break counter * 2; }
+    };
+    for elem in [10, 20, 30] { println!("{elem}"); }
+    println!("{x} {result}");
+}</code></pre>
+</section>
+<h2 class="cat-heading" id="cat-Ownership-&amp;-Memory">Ownership &amp; Memory</h2>
+
+<section class="topic" id="topic-8" data-search="ownership">
+  <div class="topic-head">
+    <span class="topic-index">08</span>
+    <h3>Ownership</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>Rust-এর সবচেয়ে মূল concept — প্রতিটা ভ্যালুর একটা মাত্র owner থাকে, owner scope থেকে বেরিয়ে গেলে ভ্যালু automatically drop (deallocate) হয়ে যায়। Assignment বা function-এ পাস করলে (non-Copy টাইপে) ownership move হয়ে যায়, আগের ভ্যারিয়েবল আর ব্যবহারযোগ্য থাকে না।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>Garbage collector ছাড়াই compile-time এ memory safety guarantee করা — no dangling pointer, no double-free, no memory leak (সাধারণ ক্ষেত্রে)।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>প্রতিটা Rust প্রোগ্রামে — এটা এড়ানো যায় না, পুরো ভাষা এই মডেলের উপর দাঁড়িয়ে।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>এটাই Rust শেখার সবচেয়ে কঠিন কিন্তু সবচেয়ে মূল্যবান অংশ — 'borrow checker-এর সাথে যুদ্ধ' নতুনদের জন্য common experience, কিন্তু একবার mental model তৈরি হয়ে গেলে এটা runtime crash-এর বদলে compile-time এ বাগ ধরে ফেলে, যা production-এ অমূল্য।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">fn main() {
+    let s1 = String::from("hello");
+    let s2 = s1; // s1-এর ownership s2-তে move হলো
+    // println!("{s1}"); // কম্পাইল এরর: value borrowed after move
+    println!("{s2}");
+
+    let n1 = 5;
+    let n2 = n1; // i32 হলো Copy টাইপ, তাই এটা কপি হয়, move না
+    println!("{n1} {n2}"); // দুটোই valid
+} // s2 এখানে drop হয়, মেমরি ফ্রি হয়</code></pre>
+</section>
+
+<section class="topic" id="topic-9" data-search="references and borrowing">
+  <div class="topic-head">
+    <span class="topic-index">09</span>
+    <h3>References and Borrowing</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>&amp; দিয়ে একটা ভ্যালুর reference (borrow) নেওয়া যায় — ownership নেওয়া ছাড়াই ভ্যালু access করা যায়। একই সময়ে হয় একাধিক immutable reference (&amp;T), অথবা একটামাত্র mutable reference (&amp;mut T) থাকতে পারে, দুটো একসাথে না।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>Ownership move না করেই function-এর মধ্যে ভ্যালু পাস করা, এবং compile-time এ data race প্রতিরোধ করা।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>Function parameter, struct field access, collection iteration-এ।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>এই 'borrowing rule' (একটা mutable XOR একাধিক immutable) কম্পাইলার এনফোর্স করে — এটাই Rust-কে data race-free করে তোলে multi-threaded কোডেও, কোনো runtime lock ছাড়াই। rustc-এর error message গুলো borrow checker সমস্যা বোঝাতে খুবই helpful, ধৈর্য ধরে পড়ুন।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">fn calculate_length(s: &amp;String) -&gt; usize { s.len() }
+fn change(s: &amp;mut String) { s.push_str(", world"); }
+fn main() {
+    let s1 = String::from("hello");
+    let len = calculate_length(&amp;s1); // borrow, ownership move হয়নি
+    println!("{s1} has length {len}");
+
+    let mut s2 = String::from("hello");
+    change(&amp;mut s2);
+    println!("{s2}");
+}</code></pre>
+</section>
+
+<section class="topic" id="topic-10" data-search="the slice type">
+  <div class="topic-head">
+    <span class="topic-index">10</span>
+    <h3>The Slice Type</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>Slice (&amp;[T] বা &amp;str) একটা collection-এর contiguous অংশের reference — ownership ছাড়াই। এটাও একটা ধরনের borrow, তাই ownership rule মেনে চলে।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>পুরো collection কপি না করে তার একটা অংশ নিরাপদে reference করা।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>String-এর substring নেওয়া, array/vector-এর একটা অংশ function-এ পাঠানো।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>Function parameter-এ &amp;String না নিয়ে &amp;str নেওয়া বেশি idiomatic (deref coercion-এর মাধ্যমে &amp;String এমনিতেই &amp;str-এ কাজ করে) — এটা function-কে বেশি flexible/generic বানায়, String literal এবং owned String দুটোই accept করতে পারে।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">fn first_word(s: &amp;str) -&gt; &amp;str {
+    let bytes = s.as_bytes();
+    for (i, &amp;item) in bytes.iter().enumerate() {
+        if item == b' ' { return &amp;s[0..i]; }
+    }
+    &amp;s[..]
+}
+fn main() {
+    let s = String::from("hello world");
+    println!("{}", first_word(&amp;s));
+    let arr = [1, 2, 3, 4, 5];
+    let slice = &amp;arr[1..3];
+    println!("{:?}", slice);
+}</code></pre>
+</section>
+<h2 class="cat-heading" id="cat-Structs-&amp;-Enums">Structs &amp; Enums</h2>
+
+<section class="topic" id="topic-11" data-search="structs">
+  <div class="topic-head">
+    <span class="topic-index">11</span>
+    <h3>Structs</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>struct দিয়ে related field-কে একটা নামযুক্ত টাইপে গ্রুপ করা হয়। তিন ধরনের struct আছে: named-field, tuple struct, ও unit-like struct।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>সম্পর্কিত ডেটাকে একটা logical, টাইপ-সেফ ইউনিটে সংগঠিত করা।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>Domain model (User, Order), config struct, API payload-এ।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>Struct instantiate করার সময় field shorthand (Point { x, y } যখন ভ্যারিয়েবলের নাম field-এর সাথে মেলে) এবং struct update syntax (..other_instance) কোড অনেক সংক্ষিপ্ত করে। Debug ডিরাইভ (#[derive(Debug)]) না দিলে struct প্রিন্ট করা যায় না — নতুনদের কমন ভুল।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">#[derive(Debug)]
+struct User {
+    username: String,
+    active: bool,
+}
+fn main() {
+    let username = String::from("karim");
+    let user1 = User { username, active: true };
+    let user2 = User { active: false, ..user1 };
+    println!("{:?}", user2);
+}</code></pre>
+</section>
+
+<section class="topic" id="topic-12" data-search="methods">
+  <div class="topic-head">
+    <span class="topic-index">12</span>
+    <h3>Methods</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>impl ব্লকের ভেতরে struct/enum-এর সাথে method সংজুক্ত করা হয়। প্রথম parameter &amp;self, &amp;mut self, বা self হয় — কোন ধরনের access দরকার তা নির্দিষ্ট করে। impl ব্লকে self ছাড়া function হলো associated function (যেমন Type::new())।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>একটা টাইপের সাথে behavior সংযুক্ত করে object-oriented-এর মতো API দেওয়া।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>Constructor প্যাটার্ন (::new()), domain logic, builder প্যাটার্নে।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>&amp;self নাকি &amp;mut self নাকি self নেওয়া হবে সেটা ঠিক করা একটা গুরুত্বপূর্ণ API design সিদ্ধান্ত — self (ownership নেওয়া) method সাধারণত builder প্যাটার্নে ব্যবহৃত হয় (fn build(self) -&gt; Product), যাতে ব্যবহারের পর আর ব্যবহার করা না যায়।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">struct Rectangle { width: u32, height: u32 }
+impl Rectangle {
+    fn new(width: u32, height: u32) -&gt; Self { Self { width, height } }
+    fn area(&amp;self) -&gt; u32 { self.width * self.height }
+}
+fn main() {
+    let rect = Rectangle::new(30, 50);
+    println!("area: {}", rect.area());
+}</code></pre>
+</section>
+
+<section class="topic" id="topic-13" data-search="enums">
+  <div class="topic-head">
+    <span class="topic-index">13</span>
+    <h3>Enums</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>enum দিয়ে এমন একটা টাইপ ডিফাইন করা হয় যার ভ্যালু নির্দিষ্ট কয়েকটা variant-এর যেকোনো একটা হতে পারে — প্রতিটা variant চাইলে ভিন্ন ভিন্ন ডেটাও বহন করতে পারে (Java/C-এর enum থেকে অনেক বেশি শক্তিশালী)।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>সীমিত সংখ্যক সম্ভাব্য state/variant, প্রতিটার সাথে সম্পর্কিত ডেটাসহ, টাইপ-সেফভাবে represent করা।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>State machine, Option/Result-এর মতো core টাইপ, message/event টাইপ।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>Rust-এর Option&lt;T&gt; এবং Result&lt;T, E&gt; — দুটোই আসলে built-in enum, এবং এরাই null-pointer ও exception ছাড়া error/absence হ্যান্ডেল করার মূল হাতিয়ার। match-এর সাথে combine করলে কম্পাইলার নিশ্চিত করে সব variant হ্যান্ডেল হয়েছে (exhaustiveness check) — এটা production কোডে বাগ কমানোর একটা বড় কারণ।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">enum Shape {
+    Circle(f64),
+    Rectangle(f64, f64),
+    Triangle { base: f64, height: f64 },
+}
+fn area(s: &amp;Shape) -&gt; f64 {
+    match s {
+        Shape::Circle(r) =&gt; std::f64::consts::PI * r * r,
+        Shape::Rectangle(w, h) =&gt; w * h,
+        Shape::Triangle { base, height } =&gt; 0.5 * base * height,
+    }
+}
+fn main() { println!("{}", area(&amp;Shape::Circle(2.0))); }</code></pre>
+</section>
+
+<section class="topic" id="topic-14" data-search="pattern matching (match)">
+  <div class="topic-head">
+    <span class="topic-index">14</span>
+    <h3>Pattern Matching (match)</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>match একটা এক্সপ্রেশনকে একাধিক pattern-এর বিপরীতে চেক করে, প্রথম যেটা মিলবে সেই ব্রাঞ্চ execute হবে। কম্পাইলার জোর করে সব সম্ভাব্য case (exhaustive) কভার করাতে বাধ্য করে, বা _ দিয়ে বাকি সব ধরতে হয়।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>Enum/ডেটার structure অনুযায়ী নিরাপদ, exhaustive branching করা।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>Enum handling, Result/Option unwrap করা, complex conditional logic-এ।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>match-এর exhaustiveness check প্রোডাকশন কোডে একটা বড় সুরক্ষা — enum-এ নতুন variant যোগ করলে সব জায়গার match ব্লক কম্পাইল-টাইমে error দেখাবে যেখানে সেই variant হ্যান্ডেল হয়নি, ফলে কোনো case ভুলে বাদ পড়ে না।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">fn describe(n: i32) -&gt; &amp;'static str {
+    match n {
+        0 =&gt; "শূন্য",
+        1..=9 =&gt; "এক অঙ্কের",
+        n if n &lt; 0 =&gt; "ঋণাত্মক",
+        _ =&gt; "বড় সংখ্যা",
+    }
+}
+fn main() { println!("{}", describe(5)); }</code></pre>
+</section>
+
+<section class="topic" id="topic-15" data-search="if let / let-else">
+  <div class="topic-head">
+    <span class="topic-index">15</span>
+    <h3>if let / let-else</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>if let একটা single-pattern match-কে সংক্ষিপ্ত করে যখন শুধু একটা variant নিয়েই আগ্রহ থাকে, বাকিদের নিয়ে না। let...else pattern না মিললে early return/break/panic করতে বাধ্য করে।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>সব variant হ্যান্ডেল না করে শুধু প্রাসঙ্গিক একটা case নিয়ে সংক্ষিপ্তভাবে কাজ করা।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>Option/Result থেকে একটা নির্দিষ্ট ভ্যালু বের করা, config-এর optional field হ্যান্ডেল করায়।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>পুরো match ব্লক লেখা যখন অপ্রয়োজনীয় বয়লারপ্লেট মনে হয়, তখন if let/let-else বেছে নিন — কিন্তু যদি সব variant নিয়ে চিন্তা করা জরুরি হয়, তাহলে match-এর exhaustiveness safety হারাবেন না।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">fn main() {
+    let config_max: Option&lt;u8&gt; = Some(3);
+    if let Some(max) = config_max {
+        println!("সর্বোচ্চ: {max}");
+    }
+
+    let Some(x) = config_max else {
+        panic!("কনফিগ নেই!");
+    };
+    println!("x = {x}");
+}</code></pre>
+</section>
+<h2 class="cat-heading" id="cat-Project-Organization">Project Organization</h2>
+
+<section class="topic" id="topic-16" data-search="packages and crates">
+  <div class="topic-head">
+    <span class="topic-index">16</span>
+    <h3>Packages and Crates</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>Crate হলো compilation-এর একক (binary অথবা library); package হলো এক বা একাধিক crate-এর একটা bundle যার একটা Cargo.toml থাকে।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>কোড কম্পাইল ও distribute করার একক নির্ধারণ করা।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>প্রতিটা প্রোজেক্ট একটা package, crates.io-তে shared library হলো একেকটা crate।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>একটা package-এ একটামাত্র library crate থাকতে পারে, কিন্তু একাধিক binary crate (src/bin/ ফোল্ডারে) থাকতে পারে — এটা একই লজিক দিয়ে একাধিক CLI টুল বানাতে সুবিধা দেয়।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">// Cargo.toml
+// [package]
+// name = "my_package"
+// version = "0.1.0"
+// edition = "2021"
+//
+// src/lib.rs      &lt;- library crate root
+// src/main.rs     &lt;- binary crate root</code></pre>
+</section>
+
+<section class="topic" id="topic-17" data-search="modules &amp; privacy">
+  <div class="topic-head">
+    <span class="topic-index">17</span>
+    <h3>Modules &amp; Privacy</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>mod কীওয়ার্ড দিয়ে কোডকে namespace-এ organize করা হয়। ডিফল্টভাবে সবকিছু private — pub কীওয়ার্ড দিয়ে explicit ভাবে expose করতে হয়।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>বড় কোডবেসকে logical অংশে ভাগ করা এবং API surface নিয়ন্ত্রণ করা (encapsulation)।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>লাইব্রেরি ডিজাইন, internal implementation detail লুকানো, ফিচার অনুযায়ী কোড organize করায়।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>ডিফল্ট privacy 'private' হওয়া Rust-এর deliberate সিদ্ধান্ত — এটা developer-কে explicit ভাবে চিন্তা করতে বাধ্য করে কী public API হিসেবে expose করা উচিত, accidental API leak এড়ায়। pub(crate) দিয়ে শুধু নিজের crate-এর মধ্যে visible রাখা common pattern module boundary maintaining-এ।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">mod front_of_house {
+    pub mod hosting {
+        pub fn add_to_waitlist() {}
+    }
+}
+pub fn eat_at_restaurant() {
+    front_of_house::hosting::add_to_waitlist();
+}</code></pre>
+</section>
+
+<section class="topic" id="topic-18" data-search="use keyword &amp; paths">
+  <div class="topic-head">
+    <span class="topic-index">18</span>
+    <h3>use Keyword &amp; Paths</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>use দিয়ে কোনো item-এর path scope-এ নিয়ে আসা হয়, বারবার পুরো path না লিখে সংক্ষেপে ব্যবহার করা যায়। as দিয়ে rename, {} দিয়ে একসাথে একাধিক item import করা যায়।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>কোড readable রাখা, long qualified path বারবার না লেখা।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>External crate ব্যবহার করা, নিজের module-এর item অন্য জায়গায় ব্যবহার করা।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>Function import করার সময় সাধারণত parent module পর্যন্তই use করা idiomatic (use std::collections; collections::HashMap::new()), যাতে কল সাইটে বোঝা যায় এটা কোথা থেকে এসেছে — কিন্তু struct/enum পুরো path সহ import করাই স্বাভাবিক।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">use std::collections::HashMap;
+use std::fmt::Result as FmtResult; // rename করে ambiguity এড়ানো
+
+fn main() {
+    let mut map: HashMap&lt;String, i32&gt; = HashMap::new();
+    map.insert(String::from("key"), 1);
+}</code></pre>
+</section>
+
+<section class="topic" id="topic-19" data-search="cargo release profiles">
+  <div class="topic-head">
+    <span class="topic-index">19</span>
+    <h3>Cargo Release Profiles</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>Cargo.toml-এ [profile.dev] এবং [profile.release] সেকশনে কম্পাইলার অপ্টিমাইজেশন লেভেল কাস্টমাইজ করা যায় — dev দ্রুত কম্পাইল হয় কম অপ্টিমাইজেশনে, release ধীরে কম্পাইল হয় কিন্তু দ্রুত রান করে।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>ডেভেলপমেন্ট গতি ও প্রোডাকশন পারফরম্যান্সের মধ্যে ট্রেড-অফ নিয়ন্ত্রণ করা।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>Production deployment বিল্ড, বাইনারি সাইজ অপ্টিমাইজেশন-এ।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>প্রোডাকশন বিল্ডে opt-level = 3, lto = true সেট করা পারফরম্যান্স আরও বাড়াতে পারে, আর panic = "abort" বাইনারি সাইজ কমায় (unwinding কোড বাদ দিয়ে) — কিন্তু তখন catch_unwind কাজ করবে না, তাই দরকার বুঝে সেট করুন।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust"># Cargo.toml
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"</code></pre>
+</section>
+
+<section class="topic" id="topic-20" data-search="publishing crates &amp; workspaces">
+  <div class="topic-head">
+    <span class="topic-index">20</span>
+    <h3>Publishing Crates &amp; Workspaces</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>cargo publish দিয়ে crates.io-তে নিজের লাইব্রেরি প্রকাশ করা যায় (semver মেনে version বাড়িয়ে)। Cargo workspace দিয়ে একাধিক related crate একটা single Cargo.lock ও target directory শেয়ার করে একসাথে ম্যানেজ করা যায়।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>নিজের কোড কমিউনিটির সাথে শেয়ার করা, এবং বড় monorepo-স্টাইল প্রোজেক্টে একাধিক crate একসাথে ম্যানেজ করা।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>Open-source লাইব্রেরি প্রকাশ, internal মাইক্রোসার্ভিস/লাইব্রেরি একই repo-তে রাখায়।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>Publish করা একটা crate version কখনো delete করা যায় না (শুধু yank করা যায়, যা নতুন dependency resolution-এ ব্যবহার নিরুৎসাহিত করে কিন্তু existing user-এর জন্য থাকে) — তাই publish করার আগে Cargo.toml-এর metadata (license, description, repository) ভালোভাবে যাচাই করুন। বড় Rust প্রোজেক্টে workspace ব্যবহার করা সাধারণ প্র্যাকটিস, compile time ও dependency ম্যানেজমেন্ট দুটোতেই সুবিধা দেয়।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust"># workspace root Cargo.toml
+[workspace]
+members = ["app", "core_lib", "utils"]
+
+# publish করার আগে
+# cargo login
+# cargo publish --dry-run</code></pre>
+</section>
+<h2 class="cat-heading" id="cat-Collections">Collections</h2>
+
+<section class="topic" id="topic-21" data-search="vectors (vec&lt;t&gt;)">
+  <div class="topic-head">
+    <span class="topic-index">21</span>
+    <h3>Vectors (Vec&lt;T&gt;)</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>Vec&lt;T&gt; হলো heap-allocated, growable array — একই টাইপের element রাখতে পারে, dynamically resize হয়।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>Dynamic-size list এর প্রয়োজনে সবচেয়ে বেশি ব্যবহৃত collection।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>প্রায় সব জায়গায় — API response, database result set, in-memory buffer।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>vec[index] out-of-bounds হলে panic করে, কিন্তু vec.get(index) একটা Option&lt;&amp;T&gt; রিটার্ন করে যা নিরাপদে None হ্যান্ডেল করা যায় — external/user-controlled index এর ক্ষেত্রে সবসময় .get() ব্যবহার করাই নিরাপদ প্রোডাকশন প্র্যাকটিস।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">fn main() {
+    let mut v: Vec&lt;i32&gt; = Vec::new();
+    v.push(1); v.push(2); v.push(3);
+    let v2 = vec![10, 20, 30];
+    println!("{:?}", v.get(5)); // None, panic না
+    for i in &amp;v2 { println!("{i}"); }
+}</code></pre>
+</section>
+
+<section class="topic" id="topic-22" data-search="strings (utf-8)">
+  <div class="topic-head">
+    <span class="topic-index">22</span>
+    <h3>Strings (UTF-8)</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>String (owned, growable, heap) এবং &amp;str (borrowed slice) — দুটোই সবসময় valid UTF-8 নিশ্চিত করে। ইনডেক্স দিয়ে সরাসরি একটা character অ্যাক্সেস করা যায় না (multi-byte UTF-8 এর কারণে)।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>টেক্সট ডেটা নিরাপদে, Unicode-correct ভাবে সংরক্ষণ ও প্রসেস করা।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>প্রায় সব অ্যাপ্লিকেশনে টেক্সট হ্যান্ডলিং-এ, বিশেষভাবে internationalized কনটেন্টে।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>s[0] করা যায় না (কম্পাইল এরর) — .chars() দিয়ে Unicode scalar value বা .bytes() দিয়ে raw byte iterate করতে হয়। এটা প্রথমে বিরক্তিকর মনে হলেও এটা বাংলার মতো multi-byte স্ক্রিপ্টের সাথে কাজ করার সময় silent bug প্রতিরোধ করে যা অন্য ভাষায় হয়ে যায়।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">fn main() {
+    let mut s = String::from("বাংলা");
+    s.push_str(" ভাষা");
+    for c in s.chars() { print!("{c} "); }
+    println!("\nbyte len: {}", s.len());
+}</code></pre>
+</section>
+
+<section class="topic" id="topic-23" data-search="hash maps">
+  <div class="topic-head">
+    <span class="topic-index">23</span>
+    <h3>Hash Maps</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>HashMap&lt;K, V&gt; key-value pair রাখে হ্যাশিং করে — dynamically sized, unordered। entry() API দিয়ে insert-or-update প্যাটার্ন সংক্ষেপে লেখা যায়।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>Key দিয়ে দ্রুত lookup, associative data রাখা।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>Caching, counting/frequency map, lookup table-এ।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>entry(key).or_insert(default) প্যাটার্ন Rust-এ counting/grouping লজিকের idiomatic উপায় — Java/Go-এর মতো ম্যানুয়ালি exists-চেক করে insert করার দরকার হয় না। ডিফল্টভাবে HashMap-এর হ্যাশ ফাংশন DoS-resistant কিন্তু তুলনামূলক ধীর — পারফরম্যান্স-ক্রিটিক্যাল কোডে FxHashMap-এর মতো বিকল্প বিবেচনা করা যায়।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">use std::collections::HashMap;
+fn main() {
+    let text = "hello world hello rust";
+    let mut counts: HashMap&lt;&amp;str, i32&gt; = HashMap::new();
+    for word in text.split_whitespace() {
+        *counts.entry(word).or_insert(0) += 1;
+    }
+    println!("{:?}", counts);
+}</code></pre>
+</section>
+<h2 class="cat-heading" id="cat-Error-Handling">Error Handling</h2>
+
+<section class="topic" id="topic-24" data-search="panic! (unrecoverable errors)">
+  <div class="topic-head">
+    <span class="topic-index">24</span>
+    <h3>panic! (Unrecoverable Errors)</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>panic! macro কল হলে প্রোগ্রাম error message প্রিন্ট করে stack unwind করে (বা abort করে) বন্ধ হয়ে যায় — এটা 'এই অবস্থা থেকে চলা সম্ভব না' বোঝায়।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>Programmer bug বা truly unrecoverable অবস্থা signal করা, যেখানে চালিয়ে যাওয়া নিরাপদ না।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>Invariant violation, prototype/test কোড, array out-of-bounds-এর মতো internal bug ধরায়।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>Library কোডে unwrap()/expect() ব্যবহার minimize করুন — এগুলো panic ট্রিগার করে, যা library ব্যবহারকারীর প্রোগ্রাম ক্র্যাশ করাতে পারে। Production application কোডেও panic কে normal error flow-এর জন্য ব্যবহার করবেন না, শুধু genuinely unrecoverable bug-এর জন্য রাখুন।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">fn main() {
+    let v = vec![1, 2, 3];
+    // v[99]; // panic: index out of bounds
+    let x: Option&lt;i32&gt; = None;
+    // x.unwrap(); // panic: called `Option::unwrap()` on a `None` value
+    let x2: Option&lt;i32&gt; = None;
+    x2.expect("এখানে একটা ভ্যালু থাকা উচিত ছিল"); // কাস্টম panic message
+}</code></pre>
+</section>
+
+<section class="topic" id="topic-25" data-search="result (recoverable errors)">
+  <div class="topic-head">
+    <span class="topic-index">25</span>
+    <h3>Result (Recoverable Errors)</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>Result&lt;T, E&gt; একটা enum যার দুটো variant: Ok(T) সাফল্য, Err(E) ব্যর্থতা। এটাই Rust-এ exception-এর বিকল্প — error explicit ভাবে টাইপ সিস্টেমে দেখা যায়, ignore করা কঠিন।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>এমন অপারেশনের ফলাফল টাইপ-সেফভাবে ফেরত দেওয়া যা ব্যর্থ হতে পারে, caller-কে explicit ভাবে হ্যান্ডেল করতে বাধ্য করা।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>File I/O, network call, parsing — প্রায় সব fallible অপারেশনে।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>? অপারেটর দিয়ে error propagate করা (fn foo() -&gt; Result&lt;T, E&gt; { let x = risky()?; ... }) বয়লারপ্লেট অনেক কমায় — এটা Rust-এর সবচেয়ে ব্যবহৃত idiom-গুলোর একটা। unused Result কম্পাইলার warning দেয় (#[must_use]), তাই accidentally error ignore করা কঠিন — এটা Go-এর তুলনায় বড় সেফটি সুবিধা।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">use std::fs::File;
+use std::io::{self, Read};
+
+fn read_username() -&gt; Result&lt;String, io::Error&gt; {
+    let mut f = File::open("user.txt")?; // ? দিয়ে error propagate
+    let mut s = String::new();
+    f.read_to_string(&amp;mut s)?;
+    Ok(s)
+}
+fn main() {
+    match read_username() {
+        Ok(name) =&gt; println!("নাম: {name}"),
+        Err(e) =&gt; println!("এরর: {e}"),
+    }
+}</code></pre>
+</section>
+
+<section class="topic" id="topic-26" data-search="to panic! or not to panic! (strategy)">
+  <div class="topic-head">
+    <span class="topic-index">26</span>
+    <h3>To panic! or Not to panic! (Strategy)</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>কখন panic! ব্যবহার করা উচিত আর কখন Result রিটার্ন করা উচিত তা নিয়ে নির্দেশিকা — সাধারণ নিয়ম: library কোডে caller-কে সিদ্ধান্ত নিতে দিন (Result), যেখানে failure genuinely unexpected/impossible সেখানে panic গ্রহণযোগ্য।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>সঠিক error-handling strategy বেছে নেওয়া, যাতে API predictable ও ব্যবহারযোগ্য থাকে।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>Library API ডিজাইন, prototype vs production কোড decision-এ।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>Prototype/example/test কোডে unwrap() ঠিক আছে, কিন্তু production library-তে সেটা caller-এর হাতে ছেড়ে দেওয়াই ভালো (Result রিটার্ন করে)। যেখানে টাইপ সিস্টেম দিয়েই invalid state prevent করা সম্ভব (যেমন custom validated টাইপ বানিয়ে), সেটা runtime panic/error check-এর চেয়ে ভালো ডিজাইন।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">// Library কোড: caller-কে সিদ্ধান্ত নিতে দিন
+pub fn parse_config(s: &amp;str) -&gt; Result&lt;Config, ConfigError&gt; { /* ... */ Ok(Config{}) }
+
+// Genuinely impossible অবস্থা হলে panic গ্রহণযোগ্য
+fn get_first_of_hardcoded() -&gt; i32 {
+    let v = vec![1, 2, 3];
+    v[0] // এখানে vec খালি হওয়া সম্ভবই না, তাই index সরাসরি ঠিক আছে
+}
+struct Config; struct ConfigError;</code></pre>
+</section>
+<h2 class="cat-heading" id="cat-Generics-&amp;-Traits">Generics &amp; Traits</h2>
+
+<section class="topic" id="topic-27" data-search="generic types">
+  <div class="topic-head">
+    <span class="topic-index">27</span>
+    <h3>Generic Types</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>&lt;T&gt; সিনট্যাক্স দিয়ে function, struct, enum-কে টাইপ-প্যারামিটারাইজড করা যায় — একই কোড একাধিক কংক্রিট টাইপে reuse হয়, কম্পাইল-টাইমে monomorphization হয়ে প্রতিটা টাইপের জন্য আলাদা optimized কোড তৈরি হয়।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>কোড duplication এড়িয়ে টাইপ-সেফ, reusable কোড লেখা, কোনো runtime overhead ছাড়াই।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>Generic data structure (Stack&lt;T&gt;, Container&lt;T&gt;), utility function-এ।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>Rust generics 'zero-cost abstraction' — monomorphization-এর কারণে generic কোড ঠিক ততটাই দ্রুত যতটা হাতে-লেখা টাইপ-নির্দিষ্ট কোড, কোনো runtime dispatch overhead নেই (dyn Trait ব্যবহার না করলে)। কিন্তু compile time ও বাইনারি সাইজ বাড়তে পারে বেশি monomorphization হলে।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">fn largest&lt;T: PartialOrd&gt;(list: &amp;[T]) -&gt; &amp;T {
+    let mut largest = &amp;list[0];
+    for item in list {
+        if item &gt; largest { largest = item; }
+    }
+    largest
+}
+fn main() {
+    println!("{}", largest(&amp;[10, 25, 3, 47]));
+}</code></pre>
+</section>
+
+<section class="topic" id="topic-28" data-search="traits">
+  <div class="topic-head">
+    <span class="topic-index">28</span>
+    <h3>Traits</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>trait হলো Rust-এর interface-এর সমতুল্য — কোনো টাইপ কী behavior implement করে তা define করে। Default method implementation দেওয়া যায়, এবং trait bound (T: Display) দিয়ে generic function-এ constraint দেওয়া যায়।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>একাধিক টাইপের জন্য common behavior/contract define করা, polymorphism অর্জন করা।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>Custom trait ডিজাইন, standard trait implement করা (Display, Debug, Clone, Iterator ইত্যাদি), trait bound দিয়ে generic function constrain করা।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>trait bound-এ impl Trait সিনট্যাক্স (fn notify(item: &amp;impl Summary)) static dispatch দেয় (compile-time, দ্রুত), আর dyn Trait dynamic dispatch দেয় (runtime, একই collection-এ ভিন্ন ভিন্ন কংক্রিট টাইপ রাখতে দেয় কিন্তু সামান্য overhead সহ) — কোনটা দরকার বুঝে বেছে নিন।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">trait Summary {
+    fn summarize(&amp;self) -&gt; String {
+        String::from("(পড়ুন আরো...)")
+    }
+}
+struct Article { title: String }
+impl Summary for Article {
+    fn summarize(&amp;self) -&gt; String { format!("শিরোনাম: {}", self.title) }
+}
+fn notify(item: &amp;impl Summary) { println!("খবর! {}", item.summarize()); }
+fn main() { notify(&amp;Article { title: String::from("Rust ১.০ রিলিজ") }); }</code></pre>
+</section>
+
+<section class="topic" id="topic-29" data-search="lifetimes">
+  <div class="topic-head">
+    <span class="topic-index">29</span>
+    <h3>Lifetimes</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>Lifetime annotation ('a) কম্পাইলারকে বলে দেয় একাধিক reference-এর মধ্যে বৈধতার সময়কাল কেমন সম্পর্কযুক্ত — এটা runtime এ কিছু করে না, শুধু compile-time এ dangling reference প্রতিরোধ করে।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>নিশ্চিত করা কোনো reference তার data-এর বাইরে বেঁচে না থাকে (dangling reference prevent করা) — কোনো garbage collector বা runtime check ছাড়াই।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>Function যেখানে একাধিক reference parameter নেয় ও reference রিটার্ন করে, struct যেখানে reference field আছে।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>বেশিরভাগ ক্ষেত্রে lifetime elision rule-এর কারণে explicit annotation লিখতে হয় না — কম্পাইলার নিজেই অনুমান করতে পারে। যখন কম্পাইলার নিজে বুঝতে পারে না (একাধিক reference input, reference রিটার্ন), তখনই explicit 'a annotation দরকার হয়। এটা নতুনদের কাছে সবচেয়ে বিমূর্ত concept, কিন্তু এটা memory safety-র মূল স্তম্ভ garbage collector ছাড়াই।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">fn longest&lt;'a&gt;(x: &amp;'a str, y: &amp;'a str) -&gt; &amp;'a str {
+    if x.len() &gt; y.len() { x } else { y }
+}
+fn main() {
+    let s1 = String::from("অনেক লম্বা একটা স্ট্রিং");
+    let s2 = String::from("ছোট");
+    println!("{}", longest(s1.as_str(), s2.as_str()));
+}</code></pre>
+</section>
+
+<section class="topic" id="topic-30" data-search="derivable traits">
+  <div class="topic-head">
+    <span class="topic-index">30</span>
+    <h3>Derivable Traits</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>#[derive(...)] অ্যাট্রিবিউট দিয়ে কমন trait (Debug, Clone, Copy, PartialEq, Eq, Hash, Default ইত্যাদি) স্বয়ংক্রিয়ভাবে implement করা যায়, নিজে হাতে লেখার দরকার হয় না।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>বয়লারপ্লেট trait implementation কম্পাইলারকে দিয়ে জেনারেট করানো, কোড সংক্ষিপ্ত রাখা।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>প্রায় প্রতিটা custom struct/enum-এ — Debug প্রিন্টিং, Clone কপি করার জন্য, PartialEq তুলনার জন্য।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>#[derive(Debug)] প্রায় সব struct-এ যোগ করা ভালো অভ্যাস — এটা debugging/logging-কে অনেক সহজ করে দেয়। Copy trait শুধু stack-only ডেটার জন্য derive করা যায় (যেমন সব field যদি Copy হয়) — heap ডেটাসহ struct-এ Copy derive করার চেষ্টা করলে কম্পাইল এরর হবে।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">#[derive(Debug, Clone, PartialEq, Default)]
+struct Point { x: i32, y: i32 }
+fn main() {
+    let p1 = Point::default();
+    let p2 = p1.clone();
+    println!("{:?} {}", p2, p1 == p2);
+}</code></pre>
+</section>
+<h2 class="cat-heading" id="cat-Functional-Features">Functional Features</h2>
+
+<section class="topic" id="topic-31" data-search="closures">
+  <div class="topic-head">
+    <span class="topic-index">31</span>
+    <h3>Closures</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>Closure হলো anonymous function যা তার environment থেকে ভ্যারিয়েবল ক্যাপচার করতে পারে — Fn, FnMut, FnOnce তিন ধরনের trait দিয়ে closure কীভাবে ক্যাপচার করছে (borrow, mutable borrow, বা move/consume) তা নির্ধারিত হয়।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>State ক্যাপচার করে ছোট, ইনলাইন function হিসেবে লজিক পাস করা।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>Iterator adapter (.map, .filter), callback, event handler-এ।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>move কীওয়ার্ড দিয়ে closure-কে জোর করে ownership নিতে বাধ্য করা যায় (থ্রেড spawn করার সময় প্রায়ই দরকার হয়, কারণ থ্রেড closure-এর lifetime মূল স্কোপের চেয়ে বেশি হতে পারে)। কম্পাইলার automatically সবচেয়ে কম-restrictive trait (Fn &gt; FnMut &gt; FnOnce) ব্যবহার করার চেষ্টা করে, যেভাবে closure ভ্যারিয়েবল ব্যবহার করছে তার উপর ভিত্তি করে।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">fn main() {
+    let x = vec![1, 2, 3];
+    let equal_to_x = move |z: Vec&lt;i32&gt;| z == x; // move করে ownership নিলো
+    let y = vec![1, 2, 3];
+    println!("{}", equal_to_x(y));
+
+    let mut count = 0;
+    let mut increment = || { count += 1; println!("count: {count}"); };
+    increment(); increment();
+}</code></pre>
+</section>
+
+<section class="topic" id="topic-32" data-search="iterators">
+  <div class="topic-head">
+    <span class="topic-index">32</span>
+    <h3>Iterators</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>Iterator trait নিয়ে lazy, chainable sequence processing — .map(), .filter(), .collect() ইত্যাদি adapter দিয়ে পাইপলাইন বানানো যায়। lazy মানে iterator শুধু .collect()/.sum() এর মতো consuming method কল হলেই আসলে execute হয়।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>Collection-এর উপর declarative, composable transformation করা — ম্যানুয়াল loop লেখার বদলে।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>Data transformation pipeline, filtering, aggregation, functional-স্টাইল ডেটা প্রসেসিং-এ।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>Iterator adapter zero-cost abstraction — কম্পাইল হয়ে সাধারণত হাতে-লেখা loop-এর সমান বা কখনো কখনো দ্রুততর কোডে পরিণত হয় (compiler bound-check elide করতে পারে)। প্রথমে ম্যানুয়াল for loop-এর তুলনায় ধীর মনে হলেও, ভুল ধারণা — Rust-এর iterator অন্য ভাষার lazy sequence থেকে অনেক বেশি অপ্টিমাইজড।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">fn main() {
+    let v = vec![1, 2, 3, 4, 5];
+    let sum: i32 = v.iter().filter(|&amp;&amp;x| x % 2 == 0).map(|x| x * x).sum();
+    println!("{sum}");
+    let names: Vec&lt;String&gt; = v.iter().map(|n| format!("num-{n}")).collect();
+    println!("{:?}", names);
+}</code></pre>
+</section>
+
+<section class="topic" id="topic-33" data-search="loops vs. iterators (performance)">
+  <div class="topic-head">
+    <span class="topic-index">33</span>
+    <h3>Loops vs. Iterators (Performance)</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>হাতে-লেখা index-based for loop আর iterator adapter chain (.map/.filter) — দুটোই কম্পাইল হয়ে প্রায় একই assembly-তে পরিণত হয়, কারণ Rust compiler iterator abstraction-কে অপ্টিমাইজ করে দেয় (zero-cost abstraction)।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>Idiomatic, readable কোড লিখেও পারফরম্যান্স বিসর্জন দিতে না হওয়া নিশ্চিত করা।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>Performance-sensitive কোড লেখার সময় কোন স্টাইল বেছে নেবেন তা নিয়ে সিদ্ধান্ত নেওয়ায়।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>সন্দেহ থাকলে iterator স্টাইল বেছে নিন — এটা সাধারণত বেশি readable, কম bug-prone (ম্যানুয়াল index handling নেই, out-of-bounds সম্ভাবনা নেই), এবং পারফরম্যান্স একই বা ভালো। শুধু profiling data দেখে সিদ্ধান্ত নিন কোনো নির্দিষ্ট hot-path optimize করার দরকার আছে কিনা।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">fn main() {
+    let buffer = vec![1.0f64; 1000];
+    // ম্যানুয়াল loop
+    let mut sum1 = 0.0;
+    for i in 0..buffer.len() { sum1 += buffer[i]; }
+    // Iterator adapter — একই পারফরম্যান্স
+    let sum2: f64 = buffer.iter().sum();
+    println!("{sum1} {sum2}");
+}</code></pre>
+</section>
+<h2 class="cat-heading" id="cat-Testing">Testing</h2>
+
+<section class="topic" id="topic-34" data-search="writing tests">
+  <div class="topic-head">
+    <span class="topic-index">34</span>
+    <h3>Writing Tests</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>#[test] অ্যাট্রিবিউট দেওয়া function গুলো cargo test দিয়ে চলে; assert!, assert_eq!, assert_ne! ম্যাক্রো দিয়ে expectation যাচাই করা হয়।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>কোড সঠিকভাবে কাজ করছে তা automatically verify করা।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>প্রতিটা production crate-এ — সাধারণত same file-এর নিচে #[cfg(test)] mod tests { } ব্লকে।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>#[cfg(test)] দিয়ে test মডিউল শুধু test build-এ কম্পাইল হয়, production বাইনারিতে যায় না — এতে বাইনারি সাইজ বা পারফরম্যান্সে কোনো প্রভাব পড়ে না। should_panic অ্যাট্রিবিউট দিয়ে negative test (যেখানে panic হওয়াটাই কাঙ্ক্ষিত আচরণ) লেখা যায়।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">pub fn add(a: i32, b: i32) -&gt; i32 { a + b }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn it_adds() {
+        assert_eq!(add(2, 3), 5);
+    }
+    #[test]
+    #[should_panic]
+    fn it_panics() {
+        panic!("expected panic");
+    }
+}</code></pre>
+</section>
+
+<section class="topic" id="topic-35" data-search="controlling test execution">
+  <div class="topic-head">
+    <span class="topic-index">35</span>
+    <h3>Controlling Test Execution</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>cargo test কমান্ডের বিভিন্ন ফ্ল্যাগ দিয়ে টেস্ট রান করার আচরণ নিয়ন্ত্রণ করা যায় — parallel/sequential, নির্দিষ্ট নাম দিয়ে ফিল্টার, ignored টেস্ট চালানো ইত্যাদি।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>টেস্ট suite-কে দ্রুত ও টার্গেটেড ভাবে চালানো, বিশেষত বড় প্রোজেক্টে ও CI pipeline-এ।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>CI/CD configuration, local development-এ দ্রুত নির্দিষ্ট টেস্ট re-run করায়।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>ডিফল্টভাবে টেস্ট প্যারালালি চলে multiple thread-এ — শেয়ার্ড state (যেমন একই ফাইল/ডাটাবেস) ব্যবহার করা টেস্ট থাকলে race condition হতে পারে, সেক্ষেত্রে --test-threads=1 বা প্রপার isolation দরকার।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust"># সব টেস্ট সিরিয়ালি চালানো
+cargo test -- --test-threads=1
+
+# শুধু নির্দিষ্ট নামের টেস্ট চালানো
+cargo test add
+
+# ignored টেস্টগুলোও চালানো (ধীরগতির টেস্টের জন্য #[ignore] দেওয়া থাকে)
+cargo test -- --include-ignored</code></pre>
+</section>
+
+<section class="topic" id="topic-36" data-search="test organization (unit vs integration)">
+  <div class="topic-head">
+    <span class="topic-index">36</span>
+    <h3>Test Organization (Unit vs Integration)</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>Unit test src/ ফাইলের ভেতরেই #[cfg(test)] মডিউলে থাকে, private function-ও টেস্ট করতে পারে। Integration test আলাদা tests/ ডিরেক্টরিতে থাকে, শুধু public API টেস্ট করে — একটা আলাদা crate হিসেবে কম্পাইল হয়।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>টেস্টকে granularity ও scope অনুযায়ী সঠিক জায়গায় সংগঠিত করা।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>Unit test: internal logic verify করায়। Integration test: crate-এর public API বাইরে থেকে ব্যবহারকারীর মতো করে যাচাই করায়।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>শুধু library crate-এ tests/ ডিরেক্টরি সমর্থিত (binary-only crate-এ না) — কারণ integration test crate-কে external dependency-এর মতো use করে। ভালো test suite-এ দুটোরই দরকার: unit test দ্রুত ও ফোকাসড ফিডব্যাক দেয়, integration test নিশ্চিত করে পুরো public API একসাথে ঠিকভাবে কাজ করছে।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">// tests/integration_test.rs
+use my_crate;
+
+#[test]
+fn test_public_api() {
+    assert_eq!(my_crate::add(2, 2), 4);
+}</code></pre>
+</section>
+<h2 class="cat-heading" id="cat-CLI-&amp;-I/O">CLI &amp; I/O</h2>
+
+<section class="topic" id="topic-37" data-search="command-line arguments">
+  <div class="topic-head">
+    <span class="topic-index">37</span>
+    <h3>Command-Line Arguments</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>std::env::args() দিয়ে raw command-line argument iterator হিসেবে পাওয়া যায় (প্রথমটা প্রোগ্রামের নাম)। Structured parsing দরকার হলে clap crate সবচেয়ে জনপ্রিয়।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>ব্যবহারকারীর কাছ থেকে টার্মিনাল আর্গুমেন্ট নিয়ে প্রোগ্রামের behavior নিয়ন্ত্রণ করা।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>CLI টুল, script-এর ইনপুট প্যারামিটার নেওয়ায়।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>std::env::args() non-UTF8 argument-এ panic করতে পারে — নিরাপদ হ্যান্ডলিং দরকার হলে args_os() ব্যবহার করুন। Production-grade CLI টুলে raw args() পার্স না করে clap crate (derive API সহ) ব্যবহার করা এখন প্রায় ডিফল্ট প্র্যাকটিস — এটা help text, validation, subcommand সব ফ্রি দেয়।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">use std::env;
+fn main() {
+    let args: Vec&lt;String&gt; = env::args().collect();
+    if args.len() &lt; 2 {
+        eprintln!("ব্যবহার: {} &lt;query&gt;", args[0]);
+        std::process::exit(1);
+    }
+    println!("query: {}", args[1]);
+}</code></pre>
+</section>
+
+<section class="topic" id="topic-38" data-search="reading files &amp; environment variables">
+  <div class="topic-head">
+    <span class="topic-index">38</span>
+    <h3>Reading Files &amp; Environment Variables</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>std::fs::read_to_string() দিয়ে ফাইলের কনটেন্ট পড়া হয় (Result রিটার্ন করে); std::env::var() দিয়ে environment variable পড়া হয়।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>External configuration ও ডেটা প্রোগ্রামে লোড করা।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>Config file পড়া, secret/API key env variable থেকে নেওয়া, log/data file প্রসেসিং-এ।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>std::env::var() না পেলে Err রিটার্ন করে (panic না) — required variable-এর জন্য .expect() বা প্রপার error handling দিয়ে explicit ভাবে জানান দিন কোন variable মিসিং, নাহলে ডিবাগ করা কঠিন হয়ে যায়। ফাইল পড়ার Result সবসময় ? বা match দিয়ে হ্যান্ডেল করুন, .unwrap() প্রোডাকশন কোডে এড়িয়ে চলুন।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">use std::{env, fs};
+fn main() {
+    let contents = fs::read_to_string("config.txt")
+        .unwrap_or_else(|_| String::from("default"));
+    println!("{contents}");
+    match env::var("API_KEY") {
+        Ok(key) =&gt; println!("key found"),
+        Err(_) =&gt; eprintln!("API_KEY সেট করা নেই"),
+    }
+}</code></pre>
+</section>
+
+<section class="topic" id="topic-39" data-search="redirecting errors to standard error">
+  <div class="topic-head">
+    <span class="topic-index">39</span>
+    <h3>Redirecting Errors to Standard Error</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>eprintln!/eprint! ম্যাক্রো দিয়ে stderr স্ট্রিমে আউটপুট লেখা হয়, println!/print! লেখে stdout-এ — দুটো আলাদা স্ট্রিম, শেল দিয়ে আলাদাভাবে redirect করা যায়।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>Normal output ও error/diagnostic message আলাদা করা যাতে পাইপলাইনে (|) শুধু আসল ডেটা যায়, error message মিশে না যায়।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>CLI টুলে error message, warning, progress log stderr-এ পাঠায়।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>Unix convention অনুসরণ করে CLI টুল লেখার সময় error message সবসময় stderr-এ পাঠান — এটা নিশ্চিত করে output_file.txt দিয়ে redirect করলেও error message টার্মিনালে visible থাকবে, ফাইলে মিশে যাবে না।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">fn main() {
+    println!("এটা normal output, stdout-এ যায়");
+    eprintln!("এটা error/diagnostic, stderr-এ যায়");
+}</code></pre>
+</section>
+<h2 class="cat-heading" id="cat-Smart-Pointers">Smart Pointers</h2>
+
+<section class="topic" id="topic-40" data-search="box&lt;t&gt;">
+  <div class="topic-head">
+    <span class="topic-index">40</span>
+    <h3>Box&lt;T&gt;</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>Box&lt;T&gt; সবচেয়ে সহজ smart pointer — heap-এ ডেটা রাখে, ownership একটাই, compile-time size known না থাকা টাইপ (recursive টাইপ) বা বড় ডেটা move না করে ব্যবহারের জন্য দরকার হয়।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>Heap-এ ডেটা রাখা, recursive টাইপ সম্ভব করা, বড় ডেটা copy না করে move করা।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>Recursive data structure (linked list, tree), trait object (Box&lt;dyn Trait&gt;), বড় struct efficiently move করায়।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>Recursive enum ছাড়া Box&lt;T&gt; খুব কম প্রয়োজন হয় — বেশিরভাগ ক্ষেত্রে stack allocation যথেষ্ট এবং দ্রুততর। Box&lt;dyn Trait&gt; ব্যবহার করা হয় যখন runtime এ ভিন্ন কংক্রিট টাইপের ভ্যালু একই collection-এ রাখতে হয় (heterogeneous collection)।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">enum List {
+    Cons(i32, Box&lt;List&gt;),
+    Nil,
+}
+use List::{Cons, Nil};
+fn main() {
+    let list = Cons(1, Box::new(Cons(2, Box::new(Cons(3, Box::new(Nil))))));
+}</code></pre>
+</section>
+
+<section class="topic" id="topic-41" data-search="deref trait">
+  <div class="topic-head">
+    <span class="topic-index">41</span>
+    <h3>Deref Trait</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>Deref trait implement করলে একটা কাস্টম টাইপকে * অপারেটর দিয়ে dereference করা যায়, এবং deref coercion স্বয়ংক্রিয়ভাবে &amp;MyBox&lt;T&gt; কে &amp;T-তে কনভার্ট করে দেয় function call-এ।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>Smart pointer-কে সাধারণ reference-এর মতো transparent ভাবে ব্যবহার করার সুযোগ দেওয়া।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>কাস্টম smart pointer টাইপ তৈরি করায়, standard library-এর Box/Rc-এর behavior বোঝায়।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>Deref coercion-এর কারণে &amp;String, &amp;Box&lt;String&gt; সবই সরাসরি &amp;str প্রত্যাশা করা function-এ পাস করা যায় — এই স্বচ্ছতা Rust API ব্যবহার করাকে অনেক সহজ করে, কিন্তু নিজে custom smart pointer বানানো ছাড়া সাধারণত এটা নিজে implement করার দরকার হয় না।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">use std::ops::Deref;
+struct MyBox&lt;T&gt;(T);
+impl&lt;T&gt; Deref for MyBox&lt;T&gt; {
+    type Target = T;
+    fn deref(&amp;self) -&gt; &amp;T { &amp;self.0 }
+}
+fn hello(name: &amp;str) { println!("হ্যালো, {name}!"); }
+fn main() {
+    let m = MyBox(String::from("Rust"));
+    hello(&amp;m); // deref coercion: &amp;MyBox&lt;String&gt; -&gt; &amp;String -&gt; &amp;str
+}</code></pre>
+</section>
+
+<section class="topic" id="topic-42" data-search="drop trait">
+  <div class="topic-head">
+    <span class="topic-index">42</span>
+    <h3>Drop Trait</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>Drop trait implement করলে কোনো ভ্যালু scope থেকে বের হওয়ার ঠিক আগে (owner drop হওয়ার সময়) কাস্টম cleanup কোড চালানো যায় — এটা automatic, ম্যানুয়ালি কল করার দরকার হয় না (বরং drop() সরাসরি কল করা নিষিদ্ধ, std::mem::drop() ব্যবহার করতে হয়)।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>Resource (file handle, network connection, lock) স্বয়ংক্রিয়ভাবে, নির্ভরযোগ্যভাবে release করা — RAII প্যাটার্ন।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>Custom resource management, connection pool, lock guard-এর মতো টাইপে।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>Rust-এর ownership মডেলের সাথে Drop combine হয়ে RAII (Resource Acquisition Is Initialization) দেয় — এটা C++-এর মতোই কিন্তু কম্পাইলার-এনফোর্সড, তাই manual close()/cleanup ভুলে যাওয়ার বাগ প্রায় দূর হয়ে যায় production কোডে।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">struct Connection { name: String }
+impl Drop for Connection {
+    fn drop(&amp;mut self) { println!("{} বন্ধ হচ্ছে", self.name); }
+}
+fn main() {
+    let _c = Connection { name: String::from("db-conn") };
+    println!("কাজ চলছে...");
+} // scope শেষ হলে স্বয়ংক্রিয়ভাবে drop() কল হবে</code></pre>
+</section>
+
+<section class="topic" id="topic-43" data-search="rc&lt;t&gt; — reference counted pointer">
+  <div class="topic-head">
+    <span class="topic-index">43</span>
+    <h3>Rc&lt;T&gt; — Reference Counted Pointer</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>Rc&lt;T&gt; একই ডেটার multiple owner রাখার সুযোগ দেয় — একটা reference count রাখে, .clone() করলে count বাড়ে, প্রতিটা owner drop হলে count কমে, count শূন্য হলে ডেটা deallocate হয়। শুধু single-threaded ব্যবহারের জন্য।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>একই ডেটা একাধিক জায়গা থেকে ownership শেয়ার করা যেখানে একটা single owner যথেষ্ট না।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>Graph/tree structure যেখানে একটা নোডের একাধিক parent থাকতে পারে, shared configuration data-তে।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>Rc শুধু single-threaded — multi-threaded shared ownership দরকার হলে Arc&lt;T&gt; (Atomic Rc) ব্যবহার করতে হবে। Rc&lt;T&gt; শুধু immutable shared access দেয়; ভেতরের ডেটা পরিবর্তন করতে হলে RefCell&lt;T&gt;-এর সাথে কম্বাইন করতে হয় (Rc&lt;RefCell&lt;T&gt;&gt;)।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">use std::rc::Rc;
+fn main() {
+    let a = Rc::new(String::from("shared data"));
+    let b = Rc::clone(&amp;a); // count বাড়লো, ডেটা কপি হলো না
+    println!("count: {}", Rc::strong_count(&amp;a));
+    println!("{a} {b}");
+}</code></pre>
+</section>
+
+<section class="topic" id="topic-44" data-search="refcell&lt;t&gt; &amp; interior mutability">
+  <div class="topic-head">
+    <span class="topic-index">44</span>
+    <h3>RefCell&lt;T&gt; &amp; Interior Mutability</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>RefCell&lt;T&gt; 'interior mutability' প্যাটার্ন দেয় — borrow checking কম্পাইল-টাইমের বদলে runtime এ enforce করা হয়, ফলে একটা immutable reference-এর ভেতরেও ডেটা মিউটেট করা যায় (কিন্তু rule ভাঙলে runtime panic হয়)।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>এমন পরিস্থিতিতে mutation দরকার যেখানে কম্পাইলার স্ট্যাটিকভাবে borrow rule যাচাই করতে পারে না, কিন্তু developer জানে এটা নিরাপদ।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>Mock object টেস্টিং, Rc&lt;RefCell&lt;T&gt;&gt; দিয়ে shared mutable state, self-referential-এর মতো জটিল স্ট্রাকচারে।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>RefCell compile-time safety-কে runtime check-এ রূপান্তর করে — ভুল হলে (একাধিক mutable borrow) প্রোগ্রাম panic করবে, compile error না। তাই এটা 'শেষ অস্ত্র' হিসেবে ব্যবহার করা উচিত, যখন সাধারণ &amp;mut দিয়ে ডিজাইন করা সম্ভব না — অতিরিক্ত ব্যবহার করলে Rust-এর মূল safety guarantee (compile-time check) দুর্বল হয়ে যায়।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">use std::cell::RefCell;
+fn main() {
+    let data = RefCell::new(5);
+    *data.borrow_mut() += 10;
+    println!("{}", data.borrow());
+}</code></pre>
+</section>
+
+<section class="topic" id="topic-45" data-search="reference cycles &amp; memory leaks">
+  <div class="topic-head">
+    <span class="topic-index">45</span>
+    <h3>Reference Cycles &amp; Memory Leaks</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>Rc&lt;T&gt; দিয়ে দুটো ভ্যালু একে অপরকে reference করলে (cycle) reference count কখনো শূন্যে নামে না, ফলে মেমরি কখনো free হয় না — এটাই Rust-এ (যদিও rare) মেমরি লিকের প্রধান উপায়। Weak&lt;T&gt; দিয়ে এই সমস্যা এড়ানো যায় (non-owning reference, count বাড়ায় না)।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>Reference cycle এড়িয়ে সত্যিকারের memory leak প্রতিরোধ করা, বিশেষত parent-child-এর মতো bidirectional structure-এ।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>Tree structure-এ parent pointer (child-&gt;parent), observer প্যাটার্ন-এ।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>সাধারণ নিয়ম: parent-থেকে-child সম্পর্কে Rc&lt;T&gt; (owning) ব্যবহার করুন, child-থেকে-parent সম্পর্কে Weak&lt;T&gt; (non-owning) ব্যবহার করুন — এভাবে cycle তৈরিই হয় না। এটা Rust-এর একটা known trade-off: memory safety guarantee করে (no use-after-free), কিন্তু logical memory leak পুরোপুরি প্রতিরোধ করে না, developer-কেই সচেতন থাকতে হয়।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">use std::rc::{Rc, Weak};
+use std::cell::RefCell;
+struct Node {
+    value: i32,
+    parent: RefCell&lt;Weak&lt;Node&gt;&gt;, // non-owning, cycle এড়ায়
+    children: RefCell&lt;Vec&lt;Rc&lt;Node&gt;&gt;&gt;,
+}</code></pre>
+</section>
+<h2 class="cat-heading" id="cat-Concurrency">Concurrency</h2>
+
+<section class="topic" id="topic-46" data-search="threads">
+  <div class="topic-head">
+    <span class="topic-index">46</span>
+    <h3>Threads</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>std::thread::spawn() দিয়ে একটা নতুন OS thread তৈরি করা হয় যা concurrently চলে। JoinHandle.join() দিয়ে thread শেষ হওয়ার জন্য অপেক্ষা করা হয়।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>একাধিক কাজ সত্যিকারের parallel-এ (multi-core ব্যবহার করে) চালানো।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>CPU-bound parallel কম্পিউটেশন, background processing, একাধিক independent task।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>'Fearless Concurrency' Rust-এর একটা প্রধান selling point — ownership ও borrowing rule কম্পাইল-টাইমেই data race প্রতিরোধ করে, যা C++/অন্যান্য ভাষায় শুধু runtime tool (thread sanitizer) দিয়ে ধরা পড়ে। main thread শেষ হয়ে গেলে spawn করা thread গুলো join() না করা থাকলে জোর করে বন্ধ হয়ে যায় — গুরুত্বপূর্ণ কাজে সবসময় join() করুন।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">use std::thread;
+fn main() {
+    let handle = thread::spawn(|| {
+        for i in 1..5 { println!("thread থেকে: {i}"); }
+    });
+    for i in 1..3 { println!("main থেকে: {i}"); }
+    handle.join().unwrap();
+}</code></pre>
+</section>
+
+<section class="topic" id="topic-47" data-search="message passing (channels)">
+  <div class="topic-head">
+    <span class="topic-index">47</span>
+    <h3>Message Passing (Channels)</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>std::sync::mpsc (multiple producer, single consumer) দিয়ে থ্রেডের মধ্যে channel-ভিত্তিক communication করা হয় — 'shared memory-র বদলে message পাঠিয়ে communicate করা' এই দর্শন।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>থ্রেডের মধ্যে shared mutable state ছাড়াই নিরাপদে ডেটা transfer করা।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>Producer-consumer pattern, worker thread থেকে result সংগ্রহ করায়।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>send() করার পর সেই ভ্যালুর ownership channel-এর মাধ্যমে move হয়ে যায় — sender thread এরপর সেই ভ্যালু আর ব্যবহার করতে পারে না, কম্পাইলার এটা এনফোর্স করে, ফলে accidental shared-mutable-access সম্ভবই না।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">use std::sync::mpsc;
+use std::thread;
+fn main() {
+    let (tx, rx) = mpsc::channel();
+    thread::spawn(move || {
+        tx.send(String::from("hello from thread")).unwrap();
+    });
+    let received = rx.recv().unwrap();
+    println!("{received}");
+}</code></pre>
+</section>
+
+<section class="topic" id="topic-48" data-search="shared-state concurrency (mutex/arc)">
+  <div class="topic-head">
+    <span class="topic-index">48</span>
+    <h3>Shared-State Concurrency (Mutex/Arc)</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>Mutex&lt;T&gt; একবারে একটা থ্রেডকে ডেটা access করতে দেয় (.lock() দিয়ে); Arc&lt;T&gt; (Atomic Rc) থ্রেড-সেফভাবে একই ডেটা একাধিক থ্রেডের মধ্যে shared ownership দেয়। একসাথে Arc&lt;Mutex&lt;T&gt;&gt; খুবই কমন combination।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>একাধিক থ্রেড থেকে একই shared mutable state নিরাপদে access/modify করা।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>Shared counter, cache, connection pool-এর মতো state-এ multi-threaded অ্যাক্সেস দরকার হলে।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>Mutex&lt;T&gt;.lock() একটা Result রিটার্ন করে (poisoned lock detect করতে, যখন কোনো থ্রেড lock ধরে রেখে panic করে) — production কোডে .unwrap() না করে গ্রেসফুলি হ্যান্ডেল করার কথা ভাবুন। কম্পাইলার নিশ্চিত করে Mutex ছাড়া raw shared mutable state কম্পাইলই হবে না — data race কম্পাইল-টাইম এররে ধরা পড়ে, runtime bug হিসেবে না।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">use std::sync::{Arc, Mutex};
+use std::thread;
+fn main() {
+    let counter = Arc::new(Mutex::new(0));
+    let mut handles = vec![];
+    for _ in 0..10 {
+        let counter = Arc::clone(&amp;counter);
+        handles.push(thread::spawn(move || {
+            let mut num = counter.lock().unwrap();
+            *num += 1;
+        }));
+    }
+    for h in handles { h.join().unwrap(); }
+    println!("Result: {}", *counter.lock().unwrap());
+}</code></pre>
+</section>
+
+<section class="topic" id="topic-49" data-search="send and sync traits">
+  <div class="topic-head">
+    <span class="topic-index">49</span>
+    <h3>Send and Sync Traits</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>Send মার্কার trait বোঝায় একটা টাইপ থ্রেডের মধ্যে নিরাপদে transfer (ownership move) করা যায়; Sync বোঝায় একটা টাইপ একাধিক থ্রেড থেকে একই সময়ে reference করা নিরাপদ। প্রায় সব টাইপ automatically এগুলো পায়, কম্পাইলার নিজে থেকেই যাচাই করে।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>কম্পাইল-টাইমে নিশ্চিত করা কোন টাইপ থ্রেডের মধ্যে নিরাপদে শেয়ার/পাঠানো যায়, কোনটা যায় না।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>Concurrency primitives ডিজাইন করার সময়, generic থ্রেড-সেফ কোড লেখায়।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>সাধারণত এই trait নিয়ে সরাসরি কিছু লিখতে হয় না — কম্পাইলার automatically ডিরাইভ করে এবং enforce করে (যেমন Rc&lt;T&gt; Send/Sync না, তাই থ্রেডে পাঠানোর চেষ্টা করলে compile error দেবে, এটাই আপনাকে Arc&lt;T&gt; ব্যবহার করতে বাধ্য করবে)। এই দুটো trait-ই মূল কারণ কেন Rust-এর concurrency 'fearless' — ভুল টাইপ ভুল জায়গায় ব্যবহার করলে প্রোগ্রাম কম্পাইলই হয় না।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">use std::rc::Rc;
+use std::sync::Arc;
+use std::thread;
+fn main() {
+    let data = Arc::new(5); // Arc: Send + Sync, থ্রেডে পাঠানো নিরাপদ
+    let d = Arc::clone(&amp;data);
+    thread::spawn(move || println!("{d}")).join().unwrap();
+    // let r = Rc::new(5);
+    // thread::spawn(move || println!("{r}")); // কম্পাইল এরর: Rc&lt;i32&gt; Send না
+}</code></pre>
+</section>
+<h2 class="cat-heading" id="cat-Async-Programming">Async Programming</h2>
+
+<section class="topic" id="topic-50" data-search="futures and the async syntax">
+  <div class="topic-head">
+    <span class="topic-index">50</span>
+    <h3>Futures and the Async Syntax</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>async fn একটা function কে Future রিটার্নকারী বানায় — একটা এমন ভ্যালু যা এখনই না, ভবিষ্যতে কোনো সময় রেডি হবে। .await দিয়ে একটা Future-এর ফলাফলের জন্য non-blocking ভাবে অপেক্ষা করা হয়।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>থ্রেড ব্লক না করে হাজার হাজার concurrent I/O-bound task (network request ইত্যাদি) হালকা-ওজনে হ্যান্ডেল করা।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>Web server, HTTP client, database driver, network-heavy অ্যাপ্লিকেশনে।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>Rust-এর Future ডিফল্টভাবে lazy — শুধু async fn কল করলে কিছুই execute হয় না, .await বা কোনো executor (tokio-এর মতো) দিয়ে চালানো লাগে। Rust নিজে কোনো built-in async runtime দেয় না — production কোডে tokio বা async-std-এর মতো crate অবশ্যই দরকার হয়।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">async fn fetch_data() -&gt; String {
+    // network call simulate করা
+    String::from("ডেটা এলো")
+}
+#[tokio::main]
+async fn main() {
+    let result = fetch_data().await;
+    println!("{result}");
+}</code></pre>
+</section>
+
+<section class="topic" id="topic-51" data-search="applying concurrency with async">
+  <div class="topic-head">
+    <span class="topic-index">51</span>
+    <h3>Applying Concurrency with Async</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>একাধিক Future-কে join!/select! ম্যাক্রো দিয়ে concurrently চালানো হয় — join! সবগুলো শেষ হওয়া পর্যন্ত অপেক্ষা করে, select! যেটা আগে শেষ হয় সেটা নেয়।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>একাধিক async অপারেশন একসাথে (একটার পর একটা সিরিয়ালি না) চালিয়ে সময় বাঁচানো।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>একাধিক API call parallel-এ করা, timeout ইমপ্লিমেন্ট করা (select! দিয়ে)।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>.await একটার পর একটা সিরিয়ালি করলে (each awaited separately) কোনো concurrency লাভ হয় না — সত্যিকারের concurrent execution পেতে join!/tokio::spawn ব্যবহার করতে হবে। এটা একটা কমন beginner ভুল — async মানেই automatically parallel না, এক্সপ্লিসিটলি concurrent করাতে হয়।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">async fn task1() -&gt; i32 { 1 }
+async fn task2() -&gt; i32 { 2 }
+#[tokio::main]
+async fn main() {
+    let (a, b) = tokio::join!(task1(), task2());
+    println!("{a} {b}");
+}</code></pre>
+</section>
+
+<section class="topic" id="topic-52" data-search="working with any number of futures">
+  <div class="topic-head">
+    <span class="topic-index">52</span>
+    <h3>Working With Any Number of Futures</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>futures::future::join_all() বা FuturesUnordered দিয়ে runtime এ অজানা/dynamic সংখ্যক Future একসাথে concurrently চালানো যায়, যেখানে join! এর জন্য কম্পাইল-টাইমে সংখ্যা জানা লাগে।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>Dynamic সংখ্যক async task (যেমন একটা list-এর প্রতিটা আইটেমের জন্য একটা API call) concurrently চালানো।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>Batch API call, একাধিক ফাইল parallel-এ download/process করায়।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>join_all() সব Future-কে একসাথে spawn করে মেমরিতে রাখে — খুব বেশি সংখ্যক (লাখো) Future একসাথে চালালে মেমরি চাপ পড়তে পারে; সেক্ষেত্রে buffer_unordered দিয়ে concurrency limit করা production-এ ভালো প্র্যাকটিস।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">use futures::future::join_all;
+async fn fetch(id: i32) -&gt; i32 { id * 2 }
+#[tokio::main]
+async fn main() {
+    let futures = (1..=5).map(fetch);
+    let results = join_all(futures).await;
+    println!("{:?}", results);
+}</code></pre>
+</section>
+
+<section class="topic" id="topic-53" data-search="streams">
+  <div class="topic-head">
+    <span class="topic-index">53</span>
+    <h3>Streams</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>Stream হলো Iterator-এর async ভার্সন — সময়ের সাথে একাধিক ভ্যালু asynchronously প্রোডিউস করে, .next().await দিয়ে একটার পর একটা ভ্যালু নেওয়া হয়।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>সময়ের সাথে আসতে থাকা একাধিক async ভ্যালুর সিকোয়েন্স প্রসেস করা।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>WebSocket message, chunked HTTP response, database cursor/pagination-এ।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>StreamExt trait (futures crate থেকে) দরকার হয় .next(), .map(), .filter()-এর মতো familiar iterator-স্টাইল combinator পেতে — Stream নিজে থেকে এগুলো দেয় না, এটা একটা কমন 'trait import ভুলে যাওয়া' compile error-এর কারণ।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">use futures::stream::{self, StreamExt};
+#[tokio::main]
+async fn main() {
+    let mut stream = stream::iter(vec![1, 2, 3]);
+    while let Some(val) = stream.next().await {
+        println!("{val}");
+    }
+}</code></pre>
+</section>
+<h2 class="cat-heading" id="cat-OOP-&amp;-Trait-Objects">OOP &amp; Trait Objects</h2>
+
+<section class="topic" id="topic-54" data-search="trait objects (dyn trait)">
+  <div class="topic-head">
+    <span class="topic-index">54</span>
+    <h3>Trait Objects (dyn Trait)</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>Box&lt;dyn Trait&gt; বা &amp;dyn Trait দিয়ে dynamic dispatch করা হয় — একই collection-এ ভিন্ন ভিন্ন কংক্রিট টাইপ রাখা যায় যতক্ষণ তারা সবাই একই trait implement করে, খরচ হয় সামান্য runtime vtable lookup overhead।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>Runtime এ ভিন্ন ভিন্ন টাইপের ভ্যালু একই ইন্টারফেসের মাধ্যমে uniform ভাবে হ্যান্ডেল করা — Go/Java-এর interface-এর সবচেয়ে কাছাকাছি Rust ফিচার।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>Plugin architecture, GUI widget system, heterogeneous collection (Vec&lt;Box&lt;dyn Draw&gt;&gt;) এ।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>Generic (impl Trait/monomorphization, static dispatch) আর dyn Trait (dynamic dispatch) এর মধ্যে বেছে নেওয়া একটা গুরুত্বপূর্ণ ডিজাইন সিদ্ধান্ত — static dispatch দ্রুততর কিন্তু বাইনারি সাইজ বাড়ায় ও heterogeneous collection সাপোর্ট করে না, dynamic dispatch flexible কিন্তু সামান্য runtime cost আছে।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">trait Draw { fn draw(&amp;self); }
+struct Button; struct Slider;
+impl Draw for Button { fn draw(&amp;self) { println!("বাটন আঁকা হলো"); } }
+impl Draw for Slider { fn draw(&amp;self) { println!("স্লাইডার আঁকা হলো"); } }
+fn main() {
+    let components: Vec&lt;Box&lt;dyn Draw&gt;&gt; = vec![Box::new(Button), Box::new(Slider)];
+    for c in components.iter() { c.draw(); }
+}</code></pre>
+</section>
+
+<section class="topic" id="topic-55" data-search="object-oriented design patterns">
+  <div class="topic-head">
+    <span class="topic-index">55</span>
+    <h3>Object-Oriented Design Patterns</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>Rust-এ classical inheritance নেই, কিন্তু trait + composition + trait object দিয়ে state pattern, strategy pattern-এর মতো OOP ডিজাইন প্যাটার্ন ইমপ্লিমেন্ট করা যায় — একটা ভিন্ন কিন্তু সমান শক্তিশালী উপায়ে।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>Object-oriented ভাষা থেকে পরিচিত ডিজাইন প্যাটার্ন গুলো Rust-এর ownership মডেলের সাথে খাপ খাইয়ে ব্যবহার করা।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>State machine ইমপ্লিমেন্টেশন, plugin/strategy-based architecture ডিজাইনে।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>OOP ভাষা থেকে আসা ডেভেলপারদের জন্য এই adjustment গুরুত্বপূর্ণ — inheritance-based 'is-a' চিন্তা করার বদলে trait-based 'implements this behavior' চিন্তা করাই Rust-এর idiomatic উপায়, এটা mental shift লাগে কিন্তু শেষে বেশি flexible ও composable ডিজাইন দেয়।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">trait State { fn next(self: Box&lt;Self&gt;) -&gt; Box&lt;dyn State&gt;; fn name(&amp;self) -&gt; &amp;str; }
+struct Draft; struct Published;
+impl State for Draft {
+    fn next(self: Box&lt;Self&gt;) -&gt; Box&lt;dyn State&gt; { Box::new(Published) }
+    fn name(&amp;self) -&gt; &amp;str { "Draft" }
+}
+impl State for Published {
+    fn next(self: Box&lt;Self&gt;) -&gt; Box&lt;dyn State&gt; { self }
+    fn name(&amp;self) -&gt; &amp;str { "Published" }
+}</code></pre>
+</section>
+<h2 class="cat-heading" id="cat-Patterns">Patterns</h2>
+
+<section class="topic" id="topic-56" data-search="pattern syntax (advanced)">
+  <div class="topic-head">
+    <span class="topic-index">56</span>
+    <h3>Pattern Syntax (Advanced)</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>match, if let, while let, function parameter, for loop — Rust-এর প্রায় সব জায়গায় pattern ব্যবহার করা যায়। | দিয়ে একাধিক pattern, ..= দিয়ে range, @ বাইন্ডিং দিয়ে ভ্যালু bind করে যাচাই করা, .. দিয়ে বাকি অংশ ignore করা যায়।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>Complex ডেটা structure destructure ও validate করে সংক্ষিপ্ত, readable কোড লেখা।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>Struct/enum/tuple destructuring, complex match condition-এ।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>Pattern-এর গভীর সিনট্যাক্স (nested destructuring, guard condition) জানা থাকলে অনেক ম্যানুয়াল if-else chain এক লাইনের match-এ পরিণত হয় — কোড অনেক বেশি concise ও এক্সপ্রেসিভ হয়ে যায়, কিন্তু অতিরিক্ত জটিল pattern readability কমাতে পারে, ভারসাম্য বজায় রাখুন।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">struct Point { x: i32, y: i32 }
+fn main() {
+    let p = Point { x: 0, y: 7 };
+    match p {
+        Point { x: 0, y } =&gt; println!("y অক্ষে, y={y}"),
+        Point { x, y: 0 } =&gt; println!("x অক্ষে, x={x}"),
+        Point { x, y } =&gt; println!("({x}, {y})"),
+    }
+    let msg = 5;
+    match msg {
+        n @ 1..=5 =&gt; println!("রেঞ্জে পাওয়া গেলো: {n}"),
+        _ =&gt; println!("রেঞ্জের বাইরে"),
+    }
+}</code></pre>
+</section>
+<h2 class="cat-heading" id="cat-Advanced">Advanced</h2>
+
+<section class="topic" id="topic-57" data-search="unsafe rust">
+  <div class="topic-head">
+    <span class="topic-index">57</span>
+    <h3>Unsafe Rust</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>unsafe ব্লকের ভেতরে raw pointer dereference, unsafe function কল, mutable static variable access করার মতো কাজ করা যায় যা কম্পাইলার নিজে যাচাই করতে পারে না — programmer নিজে সেই guarantee-র দায়িত্ব নেন।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>যেখানে কম্পাইলার নিরাপদতা প্রমাণ করতে পারে না কিন্তু developer জানে এটা আসলে নিরাপদ, সেখানে নিয়ন্ত্রিতভাবে সেই সীমাবদ্ধতা bypass করা।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>FFI (C library-র সাথে interop), low-level OS/hardware interaction, নতুন safe abstraction-এর ভেতরের implementation-এ।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>unsafe মানে 'সব সেফটি চেক বন্ধ' না — এটা মাত্র ৫টা নির্দিষ্ট superpower আনলক করে (raw pointer deref, unsafe fn কল, mutable static, unsafe trait implement, union field access), বাকি সব বরো-চেকিং এখনো চলে। unsafe কোড যতটা সম্ভব ছোট রাখুন এবং একটা safe API-এর ভেতরে wrap করুন, যাতে unsafe-এর দায়িত্ব একটা ছোট, ভালোভাবে অডিট করা জায়গায় সীমাবদ্ধ থাকে।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">fn main() {
+    let mut num = 5;
+    let r1 = &amp;num as *const i32;
+    let r2 = &amp;mut num as *mut i32;
+    unsafe {
+        println!("r1: {}", *r1);
+        *r2 = 10;
+    }
+}</code></pre>
+</section>
+
+<section class="topic" id="topic-58" data-search="advanced traits">
+  <div class="topic-head">
+    <span class="topic-index">58</span>
+    <h3>Advanced Traits</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>Associated type (type Item;), operator overloading (std::ops::Add ইমপ্লিমেন্ট করে), supertrait, fully-qualified syntax দিয়ে নাম-সংঘর্ষ resolve করা — trait system-এর গভীর ফিচারগুলো।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>জটিল, নমনীয় API ডিজাইন করা যেখানে generic parameter-এর বদলে associated type বেশি উপযুক্ত।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>Custom Iterator implement করা (associated type Item), মেট্রিক্স/ভেক্টর টাইপে operator overload করায়।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>Generic parameter (&lt;T&gt;) বনাম associated type (type Item) বেছে নেওয়ার নিয়ম: একটা টাইপের জন্য trait-এর একটাই sensible implementation থাকলে associated type ব্যবহার করুন (Iterator-এর মতো), একাধিক implementation দরকার হলে generic ব্যবহার করুন।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">trait Container {
+    type Item;
+    fn get(&amp;self, i: usize) -&gt; Option&lt;&amp;Self::Item&gt;;
+}
+struct MyVec(Vec&lt;i32&gt;);
+impl Container for MyVec {
+    type Item = i32;
+    fn get(&amp;self, i: usize) -&gt; Option&lt;&amp;i32&gt; { self.0.get(i) }
+}</code></pre>
+</section>
+
+<section class="topic" id="topic-59" data-search="advanced types">
+  <div class="topic-head">
+    <span class="topic-index">59</span>
+    <h3>Advanced Types</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>Newtype pattern (struct Wrapper(T)) দিয়ে টাইপ সেফটি বাড়ানো ও external trait implement করার orphan rule bypass করা যায়; Type alias (type Kilometers = i32) দিয়ে লম্বা টাইপ সংক্ষিপ্ত করা; never type (!) এমন function বোঝায় যা কখনো রিটার্ন করে না।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>টাইপ সিস্টেমকে আরও expressive ও নিরাপদ করে তোলা, বিশেষ edge-case মডেল করা।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>Domain টাইপ তৈরি (Newtype), জটিল জেনেরিক টাইপ সংক্ষিপ্ত করা, panic!/loop-এর মতো non-returning function-এ।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>Newtype pattern দিয়ে একই underlying টাইপ (যেমন i32) হলেও UserId আর ProductId-কে আলাদা, ভুলভাবে গুলিয়ে ফেলা যায় না এমন টাইপ বানানো যায় — এটা প্রোডাকশনে ভুল ID mixing-এর মতো বাগ কম্পাইল-টাইমেই ধরে ফেলে।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">struct UserId(u32);
+struct ProductId(u32);
+type Kilometers = i32;
+fn distance() -&gt; Kilometers { 42 }
+fn get_user(id: UserId) { println!("user: {}", id.0); }
+fn main() {
+    get_user(UserId(7));
+    // get_user(ProductId(7)); // কম্পাইল এরর, টাইপ মিলছে না
+}</code></pre>
+</section>
+
+<section class="topic" id="topic-60" data-search="macros">
+  <div class="topic-head">
+    <span class="topic-index">60</span>
+    <h3>Macros</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>Declarative macro (macro_rules!) pattern-matching দিয়ে কোড জেনারেট করে; procedural macro (derive/attribute/function-like) আরও শক্তিশালী, কম্পাইল-টাইমে টোকেন স্ট্রিম ম্যানিপুলেট করে কোড জেনারেট করে (যেমন #[derive(...)])।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>Compile-time কোড জেনারেশন করে বয়লারপ্লেট কমানো, নতুন সিনট্যাক্স-এর মতো ফিচার তৈরি করা যা সাধারণ function দিয়ে সম্ভব না।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>println!/vec!-এর মতো নিজস্ব declarative macro, #[derive(Serialize)]-এর মতো procedural macro (serde crate-এ ব্যাপক ব্যবহৃত)।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>Macro শক্তিশালী কিন্তু debug করা কঠিন এবং কম্পাইল সময় বাড়ায় — সাধারণ function/generic দিয়ে সমাধান করা গেলে সেটাই আগে বিবেচনা করুন, macro শুধু তখনই লিখুন যখন সত্যিই compile-time কোড জেনারেশন ছাড়া উপায় নেই।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">macro_rules! square {
+    ($x:expr) =&gt; { $x * $x };
+}
+fn main() {
+    println!("{}", square!(5)); // 25
+}</code></pre>
+</section>
+<h2 class="cat-heading" id="cat-Networking">Networking</h2>
+
+<section class="topic" id="topic-61" data-search="building a tcp/web server">
+  <div class="topic-head">
+    <span class="topic-index">61</span>
+    <h3>Building a TCP/Web Server</h3>
+  </div>
+  <div class="topic-grid">
+    <div class="field">
+      <div class="field-label">কনসেপ্ট <span class="en">— What it is</span></div>
+      <p>std::net::TcpListener দিয়ে raw TCP কানেকশন গ্রহণ করা হয়; প্রতিটা কানেকশন থ্রেড পুল (thread pool) দিয়ে হ্যান্ডেল করলে একাধিক client একসাথে সার্ভ করা যায়, single-thread করলে একটার পর একটা সিরিয়ালি প্রসেস হয়।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">উদ্দেশ্য <span class="en">— Purpose</span></div>
+      <p>কাঁচা নেটওয়ার্ক লেভেলে request গ্রহণ ও response পাঠানোর মেকানিজম বোঝা ও ইমপ্লিমেন্ট করা।</p>
+    </div>
+    <div class="field">
+      <div class="field-label">কোথায় ব্যবহার <span class="en">— Where used</span></div>
+      <p>Custom protocol সার্ভার, HTTP server নিজে থেকে বানানোর learning exercise-এ (production-এ সাধারণত axum/actix-web-এর মতো framework ব্যবহার হয়)।</p>
+    </div>
+    <div class="field note">
+      <div class="field-label">🦀 Professional Note</div>
+      <p>নিজের হাতে thread pool বানানো একটা চমৎকার শেখার অভিজ্ঞেয় (channel + worker thread pattern), কিন্তু প্রোডাকশন ওয়েব সার্ভিসে axum বা actix-web-এর মতো battle-tested async framework ব্যবহার করা উচিত — এগুলো connection pooling, graceful shutdown, error handling অনেক বেশি robust ভাবে handle করে।</p>
+    </div>
+  </div>
+  <pre><code class="language-rust">use std::net::{TcpListener, TcpStream};
+use std::io::{Read, Write};
+
+fn handle_connection(mut stream: TcpStream) {
+    let mut buffer = [0; 512];
+    stream.read(&amp;mut buffer).unwrap();
+    let response = "HTTP/1.1 200 OK\r\n\r\nHello!";
+    stream.write_all(response.as_bytes()).unwrap();
+}
+fn main() {
+    let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
+    for stream in listener.incoming() {
+        handle_connection(stream.unwrap());
+    }
+}</code></pre>
+</section>
+
+    <footer>
+      <svg class="gear" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M50 20 L56 20 L58 32 L67 35 L76 28 L81 33 L74 42 L77 51 L89 53 L89 59 L77 61 L74 70 L81 79 L76 84 L67 77 L58 80 L56 92 L50 92 L48 80 L39 77 L30 84 L25 79 L32 70 L29 61 L17 59 L17 53 L29 51 L32 42 L25 33 L30 28 L39 35 L48 32 Z" stroke="currentColor" stroke-width="4" fill="none" stroke-linejoin="round"/>
+        <circle cx="53" cy="56" r="14" stroke="currentColor" stroke-width="4" fill="none"/>
+      </svg>
+      Fearless concurrency, zero-cost abstractions — প্রতিটা কনসেপ্ট নিজে হাতে-কলমে চর্চা করাই সবচেয়ে গুরুত্বপূর্ণ।
+    </footer>
+  </main>
+</div>
+
+<button id="toTop" title="Back to top">↑</button>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/rust.min.js"></script>
+<script>
+hljs.highlightAll();
+
+const sidebar = document.getElementById('sidebar');
+const menuToggle = document.getElementById('menuToggle');
+menuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+document.addEventListener('click', (e) => {
+  if (window.innerWidth <= 980 && sidebar.classList.contains('open')) {
+    if (!sidebar.contains(e.target) && !menuToggle.contains(e.target)) {
+      sidebar.classList.remove('open');
+    }
+  }
+});
+
+const searchInput = document.getElementById('searchInput');
+searchInput.addEventListener('input', () => {
+  const q = searchInput.value.trim().toLowerCase();
+  document.querySelectorAll('.nav-group').forEach(group => {
+    let anyVisible = false;
+    group.querySelectorAll('.nav-link').forEach(link => {
+      const match = link.dataset.search.includes(q);
+      link.classList.toggle('hidden', !match);
+      if (match) anyVisible = true;
+    });
+    group.classList.toggle('hidden', !anyVisible);
+  });
+});
+
+const links = Array.from(document.querySelectorAll('.nav-link'));
+const sections = links.map(l => document.querySelector(l.getAttribute('href')));
+function onScroll() {
+  let idx = 0;
+  const y = window.scrollY + 120;
+  sections.forEach((sec, i) => { if (sec && sec.offsetTop <= y) idx = i; });
+  links.forEach(l => l.classList.remove('active'));
+  if (links[idx]) links[idx].classList.add('active');
+  const toTop = document.getElementById('toTop');
+  toTop.classList.toggle('show', window.scrollY > 500);
+}
+window.addEventListener('scroll', onScroll);
+onScroll();
+document.getElementById('toTop').addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'}));
+links.forEach(l => l.addEventListener('click', () => {
+  if (window.innerWidth <= 980) sidebar.classList.remove('open');
+}));
+</script>
+</body>
+</html>
